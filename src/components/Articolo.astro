@@ -1,12 +1,15 @@
 ---
 // Un articolo in home: grande ("apertura") per l'ultimo, in griglia per gli altri. Si apre in una nuova scheda.
 import Copertina from "./Copertina.astro";
+import { url } from "../config.js";
 const { articolo: a, apertura = false } = Astro.props;
 const data = a.data ? new Date(a.data).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" }) : "—";
 const numero = a.numero ? `n. ${String(a.numero).padStart(2, "0")}` : "n. —";
 const Titolo = apertura ? "h1" : "h2";
+// articoli interni (es. "/litigi-tra-alleati/") rispetto alla base del sito, esterni così come sono
+const href = !a.url ? "#" : /^https?:/.test(a.url) ? a.url : url(a.url);
 ---
-<a class:list={["art", { apertura }]} href={a.url ?? "#"} target="_blank" rel="noopener">
+<a class:list={["art", { apertura }]} href={href} target="_blank" rel="noopener">
   <Copertina copertina={a.copertina} />
   <div class="txt">
     <div class="meta mono">

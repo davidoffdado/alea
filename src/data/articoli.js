@@ -1,4 +1,4 @@
-// Elenco degli articoli, dal più recente. Ogni articolo vive nel suo repository e qui c'è solo il collegamento.
+// Elenco degli articoli, dal più recente. Le pagine degli articoli si importano in public/ con npm run articoli.
 // copertina: "litigi" ha una copertina disegnata apposta (src/components/Copertina.astro);
 // per gli altri basta { colore, testo } oppure, più avanti, un'immagine.
 // bozza: true -> compare solo con npm run dev, mai nel sito pubblicato
@@ -9,7 +9,7 @@ export const ARTICOLI = [
     tema: "politica",
     titolo: "I litigi tra gli alleati di governo",
     sommario: "Governano insieme e votano insieme la fiducia, ma in aula si contestano: 1.047 volte, alla Camera, dal 1948 al 2022.",
-    url: "https://davidoffdado.github.io/alleati-camera/viz/litigi.html",
+    url: "/litigi-tra-alleati/",
     copertina: "litigi",
   },
   // segnaposto per vedere la griglia mentre si lavora

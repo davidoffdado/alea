@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
+    "articoli": "node scripts/importa-articoli.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "deploy": "astro build && gh-pages -d dist --dotfiles"
