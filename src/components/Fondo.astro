@@ -1,0 +1,31 @@
+---
+// In fondo alla home: la newsletter e il piede con about, contatti e social
+import Iscrizione from "./Iscrizione.astro";
+import About from "./About.astro";
+import { SITO, socialAttivi } from "../config.js";
+---
+<div class="barra nl" id="newsletter">newsletter ↓</div>
+<section class="nl-fondo">
+  <div>
+    <h3>Un'email quando esce un nuovo articolo.</h3>
+    <p>Niente spam, niente cadenza fissa: solo quando c'è qualcosa da leggere.</p>
+  </div>
+  <Iscrizione />
+</section>
+
+<footer class="piede">
+  <div><h4>about</h4><p><About /></p></div>
+  <div class="col link-mono"><h4>contatti</h4><a href={`mailto:${SITO.email}`}>{SITO.email}</a></div>
+  {socialAttivi().length > 0 && <div class="col link-mono"><h4>social</h4>{socialAttivi().map((s) => <a href={s.url} target="_blank" rel="noopener">{s.nome} ↗</a>)}</div>}
+</footer>
+
+<style>
+  .nl-fondo { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: end; padding: 24px 0 8px; }
+  h3 { font-weight: 400; font-size: clamp(1.8rem, 3.5vw, 2.8rem); line-height: 1.05; letter-spacing: -0.03em; margin: 0; }
+  .nl-fondo p { color: var(--muted); margin: 10px 0 0; }
+  .piede { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 28px; border-top: 1px solid var(--line); margin-top: 64px; padding-top: 28px; }
+  h4 { font-family: var(--mono); font-weight: 600; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+  .piede p { margin: 0; line-height: 1.5; color: #cfccc4; max-width: 46ch; }
+  .col { display: flex; flex-direction: column; gap: 8px; }
+  @media (max-width: 860px) { .nl-fondo, .piede { grid-template-columns: 1fr; } }
+</style>

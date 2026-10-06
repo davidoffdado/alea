@@ -1,0 +1,33 @@
+---
+import Base from "../layouts/Base.astro";
+import Articolo from "../components/Articolo.astro";
+import Pannello from "../components/Pannello.astro";
+import Fondo from "../components/Fondo.astro";
+import { articoliVisibili } from "../data/articoli.js";
+import { url } from "../config.js";
+
+const [ultimo, ...altri] = articoliVisibili();
+---
+<Base>
+  <div class="wrap">
+    <header class="testa">
+      <a class="logo" href={url("")}>àlea</a>
+      <button class="btn btn-chiaro" id="apri" aria-expanded="false" aria-controls="pannello">more +</button>
+    </header>
+
+    <div class="barra lime">ultimo articolo ↓</div>
+    <Articolo articolo={ultimo} apertura />
+
+    {altri.length > 0 && (
+      <>
+        <div class="barra bianca">tutti gli articoli ↓</div>
+        <main class="elenco">
+          {altri.map((a) => <Articolo articolo={a} />)}
+        </main>
+      </>
+    )}
+
+    <Fondo />
+  </div>
+  <Pannello />
+</Base>

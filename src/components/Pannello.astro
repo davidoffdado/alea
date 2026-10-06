@@ -1,0 +1,54 @@
+---
+// Pannello lime che scende dall'alto con il pulsante "more": about, contatti, social e newsletter
+import Iscrizione from "./Iscrizione.astro";
+import About from "./About.astro";
+import { SITO, socialAttivi } from "../config.js";
+---
+<div class="pannello" id="pannello" role="dialog" aria-modal="true" aria-label="Su àlea" hidden>
+  <div class="in">
+    <div class="su"><span class="logo">àlea</span><button class="btn chiudi" id="chiudi">chiudi ×</button></div>
+    <div class="griglia">
+      <div><h4>about</h4><p class="about"><About /></p></div>
+      <div class="col link-mono"><h4>contatti</h4><a href={`mailto:${SITO.email}`}>{SITO.email}</a></div>
+      {socialAttivi().length > 0 && <div class="col link-mono"><h4>social</h4>{socialAttivi().map((s) => <a href={s.url} target="_blank" rel="noopener">{s.nome} ↗</a>)}</div>}
+      <div class="nl"><b>Un'email quando esce un nuovo articolo.</b><Iscrizione /></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const pan = document.getElementById("pannello");
+  const apri = document.getElementById("apri");
+  const mostra = (v) => {
+    if (v) pan.hidden = false;
+    // un frame di attesa perché la transizione parta dopo aver tolto "hidden"
+    requestAnimationFrame(() => pan.classList.toggle("aperto", v));
+    apri?.setAttribute("aria-expanded", String(v));
+    document.body.style.overflow = v ? "hidden" : "";
+    if (v) document.getElementById("chiudi").focus(); else apri?.focus();
+  };
+  pan.addEventListener("transitionend", () => { if (!pan.classList.contains("aperto")) pan.hidden = true; });
+  apri?.addEventListener("click", () => mostra(true));
+  document.getElementById("chiudi").addEventListener("click", () => mostra(false));
+  addEventListener("keydown", (e) => { if (e.key === "Escape" && !pan.hidden) mostra(false); });
+  if (location.hash === "#more") mostra(true);
+</script>
+
+<style>
+  .pannello { position: fixed; inset: 0; z-index: 10; background: var(--acc); color: #000; overflow: auto; transform: translateY(-100%); transition: transform .45s cubic-bezier(.6,0,.2,1); }
+  .pannello.aperto { transform: none; }
+  .in { max-width: 1280px; margin: 0 auto; padding: 0 16px 48px; }
+  .su { display: flex; justify-content: space-between; align-items: flex-start; margin: 28px 0 32px; }
+  .chiudi { background: #000; color: var(--acc); }
+  .griglia { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 40px; border-top: 2px solid #000; padding-top: 28px; }
+  h4 { font-family: var(--mono); font-weight: 600; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 12px; }
+  .about { margin: 0; font-size: 1.25rem; line-height: 1.4; max-width: 40ch; }
+  .col { display: flex; flex-direction: column; gap: 8px; }
+  .pannello :global(.link-mono a:hover) { color: #000; text-decoration: underline; }
+  .pannello :global(.iscr input) { border-color: #000; color: #000; }
+  .pannello :global(.iscr input::placeholder) { color: rgba(0,0,0,.55); }
+  .pannello :global(.iscr button) { background: #000; color: var(--acc); border-color: #000; }
+  .nl { grid-column: 1 / -1; border-top: 2px solid #000; padding-top: 24px; display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .nl b { font-weight: 400; font-size: clamp(1.6rem, 3vw, 2.4rem); letter-spacing: -0.03em; }
+  @media (max-width: 860px) { .griglia { grid-template-columns: 1fr; } }
+</style>

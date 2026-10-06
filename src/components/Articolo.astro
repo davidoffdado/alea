@@ -1,0 +1,24 @@
+---
+// Un articolo in home: grande ("apertura") per l'ultimo, in griglia per gli altri. Si apre in una nuova scheda.
+import Copertina from "./Copertina.astro";
+const { articolo: a, apertura = false } = Astro.props;
+const data = a.data ? new Date(a.data).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" }) : "—";
+const numero = a.numero ? `n. ${String(a.numero).padStart(2, "0")}` : "n. —";
+const Titolo = apertura ? "h1" : "h2";
+---
+<a class:list={["art", { apertura }]} href={a.url ?? "#"} target="_blank" rel="noopener">
+  <Copertina copertina={a.copertina} />
+  <div class="txt">
+    <div class="meta mono">
+      <span class="n">{numero}</span><span>{data}</span><span>{a.tema}</span>
+      {a.bozza && <span class="segnaposto">segnaposto</span>}
+    </div>
+    <Titolo>{a.titolo}</Titolo>
+    <p>{a.sommario}</p>
+  </div>
+</a>
+
+<style>
+  /* negli articoli in griglia il testo sta sotto la copertina */
+  a.art:not(.apertura) .txt { display: flex; flex-direction: column; gap: 10px; }
+</style>

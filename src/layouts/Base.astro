@@ -1,0 +1,32 @@
+---
+import "../styles/global.css";
+import { SITO, url } from "../config.js";
+
+const { titolo = SITO.nome, descrizione = SITO.descrizione } = Astro.props;
+const indirizzo = new URL(Astro.url.pathname, Astro.site);
+---
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{titolo}</title>
+  <meta name="description" content={descrizione}>
+  <link rel="canonical" href={indirizzo}>
+  <link rel="icon" href={url("favicon.svg")} type="image/svg+xml">
+  <!-- anteprima quando il link viene condiviso -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content={titolo}>
+  <meta property="og:description" content={descrizione}>
+  <meta property="og:url" content={indirizzo}>
+  <meta name="twitter:card" content="summary_large_image">
+  <!-- General Sans (Fontshare) e IBM Plex Mono (Google Fonts) -->
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <slot />
+</body>
+</html>

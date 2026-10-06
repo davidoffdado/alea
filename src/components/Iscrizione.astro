@@ -1,0 +1,10 @@
+---
+// Modulo della newsletter. Con l'indirizzo Substack in config.js, porta alla pagina di iscrizione
+// di Substack con l'email già compilata; finché è vuoto il modulo non invia nulla.
+import { SITO } from "../config.js";
+const azione = SITO.substack ? `${SITO.substack.replace(/\/$/, "")}/subscribe` : null;
+---
+<form class="iscr" action={azione ?? undefined} method="get" target="_blank" onsubmit={azione ? undefined : "return false"}>
+  <input type="email" name="email" placeholder="la tua email" aria-label="email" required>
+  <button>iscriviti</button>
+</form>
