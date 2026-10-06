@@ -4,7 +4,7 @@ export const SITO = {
   descrizione: "Storie con i dati, per curiosità: domande serie e meno serie, con dati aperti e codice pubblico.",
   autore: "David Ruffini",
   sitoAutore: "https://www.davidruffini.com",
-  email: "davidruffini98@gmail.com",
+  email: "ciao@alea.news",
   // indirizzo della newsletter su Substack (es. "https://nome.substack.com"); vuoto finché non è deciso
   substack: "https://aalea.substack.com",
   // i social senza indirizzo non vengono mostrati
