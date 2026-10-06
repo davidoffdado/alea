@@ -1,6 +1,7 @@
 // Dati generali del sito: cambiano qui e si aggiornano ovunque
 export const SITO = {
   nome: "àlea",
+  indirizzo: "https://alea.news",
   descrizione: "Storie con i dati, per curiosità: domande serie e meno serie, con dati aperti e codice pubblico.",
   autore: "David Ruffini",
   sitoAutore: "https://www.davidruffini.com",

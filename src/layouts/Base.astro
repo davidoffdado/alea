@@ -19,6 +19,11 @@ const indirizzo = new URL(Astro.url.pathname, Astro.site);
   <meta property="og:title" content={titolo}>
   <meta property="og:description" content={descrizione}>
   <meta property="og:url" content={indirizzo}>
+  <meta property="og:site_name" content={SITO.nome}>
+  <meta property="og:image" content={new URL(url("og/alea.png"), Astro.site)}>
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="it_IT">
   <meta name="twitter:card" content="summary_large_image">
   <!-- General Sans (Fontshare) e IBM Plex Mono (Google Fonts) -->
   <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
