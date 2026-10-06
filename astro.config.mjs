@@ -1,9 +1,8 @@
 import { defineConfig } from "astro/config";
 
-// Indirizzo del sito pubblicato. Da aggiornare quando il repository GitHub (e poi il dominio) è deciso:
-// - repository "<nome>.github.io" o dominio proprio: base "/"
-// - qualsiasi altro repository: base "/<nome-repository>"
+// Il sito è pubblicato su alea.news (dominio proprio, quindi base "/").
+// public/CNAME dice a GitHub Pages quale dominio usare e viene ricopiato a ogni deploy.
 export default defineConfig({
-  site: "https://davidoffdado.github.io",
-  base: "/alea",
+  site: "https://alea.news",
+  base: "/",
 });
