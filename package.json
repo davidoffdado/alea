@@ -11,6 +11,7 @@
     "deploy": "astro build && gh-pages -d dist --dotfiles"
   },
   "dependencies": {
+    "@astrojs/sitemap": "^3.7.4",
     "astro": "^7.3.6"
   },
   "devDependencies": {

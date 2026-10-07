@@ -2,7 +2,7 @@
 export const SITO = {
   nome: "àlea",
   indirizzo: "https://alea.news",
-  descrizione: "Storie con i dati, per curiosità: domande serie e meno serie, con dati aperti e codice pubblico.",
+  descrizione: "Raccontare storie interessanti in modi interessanti.",
   autore: "David Ruffini",
   sitoAutore: "https://www.davidruffini.com",
   email: "ciao@alea.news",
