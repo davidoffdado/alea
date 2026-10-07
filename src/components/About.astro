@@ -1,8 +1,10 @@
 ---
 // Il testo di presentazione, usato nel pannello "more" e nel piede
+// (il testo è in config.js, così lo usa anche il fondo degli articoli: scripts/importa-articoli.mjs)
 import { SITO } from "../config.js";
+const [prima, dopo] = SITO.about.split("{autore}");
 ---
-àlea è un progetto di data journalism di <a class="autore" href={SITO.sitoAutore} target="_blank" rel="noopener">{SITO.autore}</a> per raccontare storie interessanti in modi interessanti, partendo dai dati.
+{prima}<a class="autore" href={SITO.sitoAutore} target="_blank" rel="noopener">{SITO.autore}</a>{dopo}
 
 <style>
   .autore { text-decoration: underline; text-underline-offset: 3px; }

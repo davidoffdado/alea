@@ -4,6 +4,8 @@ export const SITO = {
   indirizzo: "https://alea.news",
   descrizione: "Raccontare storie interessanti in modi interessanti, partendo dai dati.",
   autore: "David Ruffini",
+  // testo dell'about (home e fondo degli articoli): {autore} diventa il nome con il link a sitoAutore
+  about: "àlea è un progetto di data journalism di {autore} per raccontare storie interessanti in modi interessanti, partendo dai dati.",
   sitoAutore: "https://www.davidruffini.com",
   email: "ciao@alea.news",
   // indirizzo della newsletter su Substack (es. "https://nome.substack.com"); vuoto finché non è deciso
