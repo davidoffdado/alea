@@ -13,7 +13,8 @@ import { SITO, socialAttivi } from "../config.js";
   <Iscrizione />
 </section>
 
-<footer class="piede">
+<!-- data-nosnippet: Google non usa questo testo come descrizione nei risultati -->
+<footer class="piede" data-nosnippet>
   <div><h4>about</h4><p><About /></p></div>
   <div class="col link-mono"><h4>contatti</h4><a href={`mailto:${SITO.email}`}>{SITO.email}</a></div>
   {socialAttivi().length > 0 && <div class="col link-mono"><h4>social</h4>{socialAttivi().map((s) => <a href={s.url} target="_blank" rel="noopener">{s.nome} ↗</a>)}</div>}
