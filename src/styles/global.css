@@ -35,10 +35,10 @@ h1, h2 { font-weight: 400; letter-spacing: -0.03em; margin: 0; transition: color
 a.art:hover h1, a.art:hover h2 { color: var(--acc); }
 
 /* ultimo articolo: la stessa figurina verticale della griglia, più grande, e accanto il titolo che occupa il resto.
-   Il titolo sta in cima, attaccato alla barra "ultimo articolo", così si legge subito; sotto il sommario e i dati */
+   Il testo sta in cima, attaccato alla barra "ultimo articolo", così il titolo si legge subito:
+   numero, data e tema, poi titolo, poi sommario (lo stesso ordine delle figurine) */
 .apertura { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; align-items: start; }
-.apertura .txt { display: flex; flex-direction: column; gap: 22px; }
-.apertura .txt h1 { order: -1; margin-top: -0.06em; }   /* -0.06em: toglie lo spazio vuoto sopra le lettere */
+.apertura .txt { display: flex; flex-direction: column; gap: 18px; }
 .apertura h1 { font-size: clamp(2.6rem, 6.2vw, 5.6rem); line-height: .98; letter-spacing: -0.04em; }
 .apertura p { color: #cfccc4; font-size: clamp(1.1rem, 1.6vw, 1.45rem); line-height: 1.45; margin: 0; max-width: 34ch; }
 
