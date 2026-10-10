@@ -2,6 +2,17 @@
 // Copertina 16:10 con angoli squadrati. Al passaggio del mouse si ingrandisce tutto il contenuto insieme (.cop-in).
 import { url } from "../config.js";
 const { copertina } = Astro.props;
+
+// moneta (n. 2): come una pagina del libro RAND del 1955, con sotto due sequenze di lanci.
+// Quella inventata (rossa) ha la serie più lunga di 4, quella vera (nera) di 7: è la tesi dell'articolo.
+const CIFRE = [
+  "42319 11154 03251 23308 72156 68675 20894 70285 81508 05570",
+  "70620 24707 55698 93602 34571 28800 25635 88649 28598 16845",
+  "98366 96252 37233 20225 18184 38826 79856 69806 70453 05205",
+  "16800 18131 52205 67204 51717 46363 71827 65180 75795 46338",
+];
+const INVENTATA = { lanci: "CTCTTCCCCTCT", da: 5, a: 8 };
+const VERA = { lanci: "TCTCCCCCCCTT", da: 3, a: 9 };
 ---
 <div class="cop">
   <div class="cop-in">
@@ -10,6 +21,16 @@ const { copertina } = Astro.props;
         <div class="ph sx" style={`background-image: url(${url("img/umberto_bossi.jpg")})`} role="img" aria-label="Umberto Bossi"></div>
         <div class="ph dx" style={`background-image: url(${url("img/silvio_berlusconi.jpg")})`} role="img" aria-label="Silvio Berlusconi"></div>
         <svg class="lampo" viewBox="0 0 60 120" aria-hidden="true"><polygon points="38,0 6,66 28,66 18,120 56,46 33,46 46,0" fill="#eb6834" stroke="#000" stroke-width="3" stroke-linejoin="round"/></svg>
+      </div>
+    ) : copertina === "moneta" ? (
+      <div class="c-moneta" role="img" aria-label="Una tavola di cifre casuali e due sequenze di testa e croce: una inventata, una vera">
+        <pre class="cifre">{CIFRE.map((r, i) => <><span class="nr">{String(i).padStart(5, "0")}</span>{"   " + r + "\n"}</>)}</pre>
+        {[["inventata", "tu", INVENTATA], ["moneta vera", "vera", VERA]].map(([nome, classe, s]) => (
+          <div class={`seq ${classe}`}>
+            <span class="eti">{nome}</span>
+            <div class="lanci">{[...s.lanci].map((x, i) => <span class={i >= s.da && i <= s.a ? "serie" : ""}>{x}</span>)}</div>
+          </div>
+        ))}
       </div>
     ) : (
       <div class="c-tipo" style={`background: ${copertina.colore}`}><span>{copertina.testo}</span></div>
@@ -28,6 +49,23 @@ const { copertina } = Astro.props;
   .sx { left: 0; clip-path: polygon(0 0, 100% 0, 80% 100%, 0 100%); }
   .dx { right: 0; clip-path: polygon(20% 0, 100% 0, 100% 100%, 0 100%); }
   .lampo { position: absolute; left: 50%; top: 50%; width: 16%; transform: translate(-50%, -50%); }
+
+  /* moneta: carta avorio e macchina da scrivere, come l'articolo. Le misure sono in cqw
+     (centesimi della larghezza della copertina), così è uguale in apertura e in griglia */
+  .c-moneta { position: absolute; inset: 0; container-type: inline-size; background: #f4efe3; color: #1f1d19;
+              font-family: "Courier Prime", "Courier New", monospace; padding: 6cqw 6cqw 0;
+              display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 6cqw; }
+  .cifre { margin: 0; font: inherit; font-size: 2.05cqw; line-height: 1.6; white-space: pre; color: #1f1d19; opacity: .75; }
+  .cifre .nr { color: #6b665c; }
+  .seq { display: flex; flex-direction: column; gap: 1.2cqw; }
+  .eti { font-weight: 700; font-size: 2.4cqw; }
+  .tu .eti { color: #c23a2b; }
+  .lanci { display: grid; grid-template-columns: repeat(12, 1fr); gap: .8cqw; }
+  .lanci span { aspect-ratio: 1; display: grid; place-items: center; font-weight: 700; font-size: 3.2cqw; }
+  .tu .lanci span { color: #c23a2b; }
+  .vera .lanci span { color: #3a3631; font-weight: 400; }
+  .tu .lanci .serie { background: #c23a2b; color: #f4efe3; }
+  .vera .lanci .serie { background: #3a3631; color: #f4efe3; font-weight: 700; }
 
   /* copertina tipografica: un colore e un numero o una parola */
   .c-tipo { position: absolute; inset: 0; display: grid; place-items: center; color: #111; }

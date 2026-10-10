@@ -11,6 +11,12 @@ import { SITO } from "../src/config.js";
 
 const ARTICOLI = [
   {
+    cartella: "prova-a-fare-il-caso",
+    sorgente: "../moneta",                          // pagina unica, senza file esterni
+    pagina: "moneta.html",
+    risorse: [],
+  },
+  {
     cartella: "litigi-tra-alleati",
     sorgente: "../discorsi_camera/applausi/viz",   // si rigenera con R/13_litigi.R nel progetto
     pagina: "litigi.html",
@@ -143,13 +149,22 @@ for (const a of ARTICOLI) {
   for (const r of a.risorse) cpSync(`${a.sorgente}/${r}`, `${dest}/${r}`, { recursive: true });
 
   let html = readFileSync(`${a.sorgente}/${a.pagina}`, "utf8");
-  if (!/<\/head>/i.test(html) || !/<body[^>]*>/i.test(html)) throw new Error(`${a.cartella}: pagina senza <head> o <body>`);
+  // sostituisce il primo tag che corrisponde a "tag", saltando i commenti <!-- ... -->:
+  // una pagina può nominare <body> o <h1> nelle note iniziali, e lì non va inserito niente
+  const inserisci = (tag, fn) => {
+    let fatto = false;
+    html = html.replace(new RegExp(`<!--[\\s\\S]*?-->|${tag.source}`, "gi"), (m, ...g) => {
+      if (fatto || m.startsWith("<!--")) return m;
+      fatto = true;
+      return fn(m, ...g);
+    });
+    return fatto;
+  };
   html = html.replace(/<title>[\s\S]*?<\/title>\s*/i, "");                    // il titolo lo riscrive metaTag
-  html = html.replace(/<\/head>/i, `${metaTag(info, a.cartella)}${STILE}\n</head>`);
-  html = html.replace(/<body([^>]*)>/i, `<body$1>${TESTATA}`);
-  if (!/<\/h1>/i.test(html)) throw new Error(`${a.cartella}: niente <h1>, non so dove mettere la firma`);
-  html = html.replace(/<\/h1>/i, `</h1>${firma(info)}`);              // sotto il primo titolo
-  html = html.replace(/<\/body>/i, `${fondo(info)}\n</body>`);
+  if (!inserisci(/<\/head>/, () => `${metaTag(info, a.cartella)}${STILE}\n</head>`)) throw new Error(`${a.cartella}: pagina senza </head>`);
+  if (!inserisci(/<body([^>]*)>/, (m) => `${m}${TESTATA}`)) throw new Error(`${a.cartella}: pagina senza <body>`);
+  if (!inserisci(/<\/h1>/, () => `</h1>${firma(info)}`)) throw new Error(`${a.cartella}: niente <h1>, non so dove mettere la firma`);   // sotto il primo titolo
+  if (!inserisci(/<\/body>/, () => `${fondo(info)}\n</body>`)) throw new Error(`${a.cartella}: pagina senza </body>`);
   writeFileSync(`${dest}/index.html`, html);
   console.log(`✓ ${a.cartella}`);
 }

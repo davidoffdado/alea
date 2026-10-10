@@ -1,0 +1,1055 @@
+<!doctype html>
+<!--
+  TESTA O CROCE — prototipo del secondo numero di àlea
+  =====================================================
+  Il lettore inventa 100 lanci di moneta; un piccolo programma prova a prevederli mentre li scrive;
+  alla fine la sequenza viene confrontata con una moneta vera e con migliaia di sequenze simulate.
+
+  Tutto gira nel browser del lettore: non serve un server, quindi la pagina si può pubblicare
+  su GitHub Pages come un qualsiasi file statico. Nessun dato esce dal computer del lettore.
+
+  Com'è organizzato il file:
+    1. <head>    font, libreria d3 per i grafici, foglio di stile (CSS)
+    2. <body>    il testo e i "contenitori" vuoti che JavaScript riempie
+    3. <script>  la logica: moneta vera, misure, programma che prevede, input, articolo, grafici,
+                 tavola di cifre casuali sotto il titolo
+
+  Stile: ispirato a "A Million Random Digits with 100,000 Normal Deviates" (RAND Corporation, 1955):
+  carta avorio, inchiostro nero, macchina da scrivere. Due colori con un significato fisso, usati ovunque:
+    inchiostro nero/grigio = la macchina (la moneta vera, il programma che prevede)
+    matita rossa           = tu (l'essere umano)
+  La coppia è stata verificata anche per chi ha difficoltà a distinguere i colori (daltonismo).
+
+  Per controllare i risultati senza scrivere 100 lanci: aprire la pagina con ?prova in fondo
+  all'indirizzo (moneta.html?prova): la griglia si riempie da sola con una sequenza "umana".
+-->
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<!-- su telefono: usa la larghezza reale dello schermo invece di simulare un monitor da 980px -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Font da Google Fonts: Courier Prime, una versione ridisegnata del Courier delle macchine da scrivere.
+     È monospaziato: ogni carattere è largo uguale, quindi le cifre si incolonnano come nel libro -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+<!-- d3: libreria per i grafici. Versione fissata (7.9.0) così un aggiornamento futuro non rompe la pagina -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+
+<style>
+  /* ============================================================
+     VARIABILI
+     Definite una volta sola in :root e richiamate con var(--nome):
+     per cambiare un colore in tutta la pagina basta cambiarlo qui.
+     ============================================================ */
+  :root {
+    color-scheme: light;          /* dice al browser che la pagina è chiara (barre di scorrimento, campi, ecc.) */
+    --fondo: #f4efe3;             /* carta avorio */
+    --testo: #1f1d19;             /* inchiostro */
+    --testo-2: #6b665c;           /* testo secondario (note, etichette): inchiostro sbiadito */
+    --linea: #cfc6b2;             /* filetti leggeri e linee degli assi */
+    --fondo-fonti: #e6dec9;       /* cartoncino: lo sfondo della parte su fonti e metodologia */
+    --accento: #1f1d19;           /* titoli, pulsanti, link: lo stesso inchiostro del testo */
+
+    --macchina: #3a3631;          /* la macchina: inchiostro della tavola (barre dei grafici, moneta vera) */
+    --macchina-soft: rgba(58, 54, 49, 0.14);   /* lo stesso, trasparente: caselle previste dal programma */
+    --tu: #c23a2b;                /* tu: matita rossa */
+    --tu-testo: #b3352a;          /* rosso appena più scuro per le parole nel testo (più leggibile) */
+
+    --font: "Courier Prime", "Courier New", monospace;
+  }
+
+  /* box-sizing: border-box = larghezza e altezza includono bordo e padding (più facile da ragionare) */
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--fondo);
+    color: var(--testo);
+    font: 15px/1.7 var(--font);   /* dimensione/interlinea famiglia */
+  }
+
+  /* colonna di lettura: al massimo 700px, centrata, con 16px di margine ai lati su telefono */
+  .col { max-width: 700px; margin: 0 auto; padding: 0 16px; }
+
+  /* ============================================================
+     TITOLI
+     ============================================================ */
+  h1 {
+    font-size: clamp(2.2rem, 8vw, 3.8rem); line-height: 1.05; margin: 64px 0 28px;
+    /* clamp(minimo, preferito, massimo): 8vw = 8% della larghezza della finestra, ma mai sotto 2.2rem né sopra 3.8rem */
+    font-weight: 700;
+    text-transform: uppercase;    /* maiuscolo come le intestazioni dei rapporti dattiloscritti */
+    letter-spacing: .02em;
+    text-wrap: balance;           /* righe di lunghezza simile quando il titolo va a capo */
+  }
+
+  /* niente intertitoli: l'articolo è un testo continuo, con i grafici in mezzo */
+
+  p { margin: 0 0 1.2em; }
+  em { font-style: italic; }
+  .nota { color: var(--testo-2); font-size: .85rem; }
+  .tu { color: var(--tu-testo); font-weight: 700; }          /* parole che parlano del lettore */
+  .macchina { color: var(--accento); font-weight: 700; }     /* parole che parlano della macchina */
+  kbd { border: 1px solid var(--linea); padding: 0 5px; color: var(--accento); font: inherit; }
+
+  /* ============================================================
+     LA TAVOLA DI CIFRE CASUALI (sotto il titolo)
+     Le righe le scrive JavaScript, un carattere alla volta (sezione 9 dello script).
+     ============================================================ */
+  .cifre {
+    margin: 0 0 6px;
+    font-size: .78rem; line-height: 1.55;
+    white-space: pre;             /* rispetta gli spazi e gli a capo del testo, come in una macchina da scrivere */
+    overflow: hidden;             /* nessuna barra di scorrimento se una riga fosse troppo lunga */
+    height: calc(6 * 1.55em);     /* spazio riservato per 6 righe fin dall'inizio: il testo sotto non "salta" mentre si scrive */
+    color: var(--testo);
+  }
+  .cifre .numero { color: var(--testo-2); }   /* il numero di riga a sinistra, più chiaro */
+  /* il carrello della macchina da scrivere: un blocchetto che avanza mentre le cifre compaiono */
+  .carrello { display: inline-block; width: .6em; height: 1.1em; vertical-align: -0.2em; background: var(--testo); }
+  .cifre + .nota { margin-bottom: 40px; }      /* + = la nota che viene subito dopo la tavola */
+
+  /* ============================================================
+     IL GIOCO: una "tavola" con un'intestazione piccola, come le tavole numerate dei libri
+     ============================================================ */
+  .finestra { margin: 32px 0 40px; }
+  .barra-titolo { font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--testo-2); }
+  .dentro { padding: 10px 0 0; }
+
+  /* riga di stato: lancio a cui sei arrivato e punteggio del programma */
+  .stato { display: flex; justify-content: space-between; gap: 4px 16px; flex-wrap: wrap; font-size: .85rem; margin-bottom: 14px; }
+  .stato b { font-weight: 700; }
+
+  /* GRIGLIA DEI LANCI: 10 colonne di larghezza uguale (1fr = una "frazione" dello spazio libero) */
+  .griglia { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+  .cella {
+    aspect-ratio: 1;                      /* sempre quadrata, qualunque sia la larghezza */
+    display: flex; align-items: center; justify-content: center;   /* lettera al centro */
+    font-size: clamp(11px, 2.8vw, 15px); font-weight: 700;
+    color: var(--tu-testo);               /* le lettere le hai scritte tu: rosso */
+  }
+  /* casella ancora vuota del gioco: un puntino (solo in #griglia: le griglie dei risultati sono sempre piene) */
+  #griglia .cella:not(.piena)::after { content: "·"; color: var(--linea); }
+  .cella.presa { background: var(--macchina-soft); }                 /* il programma l'aveva prevista */
+  .cella.prossima { box-shadow: inset 0 -2px 0 var(--testo); }       /* la casella da riempire: sottolineata */
+
+  /* pulsanti Testa / Croce: due colonne uguali, grandi per il dito su telefono */
+  .tasti { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 16px; }   /* sotto la riga di stato, sopra la griglia */
+  .tasti button {
+    font: inherit; font-weight: 700; font-size: 1rem; padding: 14px 8px; cursor: pointer;
+    text-transform: uppercase; letter-spacing: .08em;
+    background: transparent; color: var(--accento); border: 1px solid var(--accento); border-radius: 0;
+    touch-action: manipulation;           /* niente zoom col doppio tocco quando si preme in fretta */
+  }
+  .tasti button:hover:not(:disabled) { background: var(--accento); color: var(--fondo); }
+  .tasti button:disabled { opacity: .3; cursor: default; }
+  .sotto { display: flex; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin-top: 14px; font-size: .8rem; color: var(--testo-2); }
+
+  /* bottone che sembra un link (per "ricomincia" e "lancia un'altra moneta") */
+  .link { font: inherit; background: none; border: 0; padding: 0; color: var(--accento); text-decoration: underline;
+          text-underline-offset: 3px; cursor: pointer; }
+  .link:hover { background: var(--accento); color: var(--fondo); text-decoration: none; }
+
+  /* ============================================================
+     LE DUE PARTI DELLA PAGINA: prima il gioco, poi l'articolo
+     ============================================================ */
+  /* [hidden] = elemento nascosto da JavaScript. !important serve perché regole come
+     "display: flex" della schermata altrimenti vincerebbero e lo mostrerebbero comunque */
+  [hidden] { display: none !important; }
+
+  /* la schermata del gioco occupa almeno tutta l'altezza della finestra (100svh = altezza visibile,
+     anche su telefono con la barra del browser) e il contenuto sta al centro in verticale */
+  .schermata { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding-top: 40px; padding-bottom: 40px; }
+  .testata-numero { font-size: .8rem; font-weight: 700; letter-spacing: .04em;   /* niente maiuscolo: àlea si scrive minuscolo */ color: var(--testo-2); margin: 0 0 12px; }
+  .apertura { font-size: clamp(1.6rem, 5vw, 2.2rem); font-weight: 700; line-height: 1.2; margin: 0 0 24px; }
+  .schermata .finestra { margin-bottom: 0; }
+
+  /* ============================================================
+     FONTI E METODOLOGIA (in fondo all'articolo)
+     Sfondo color cartoncino, più scuro della carta: si stacca dal testo come la
+     pagina finale di un rapporto. È a larghezza piena; dentro c'è la solita colonna.
+     ============================================================ */
+  .fonti { background: var(--fondo-fonti); margin-top: 72px; padding: 48px 0 96px; font-size: .82rem; line-height: 1.6; }
+  .fonti .barra-titolo { margin: 0 0 10px; }
+  .fonti ul { margin: 0 0 32px; padding-left: 1.2em; }
+  .fonti ul:last-child { margin-bottom: 0; }
+  .fonti li { margin: 0 0 .6em; }
+  .fonti strong { font-weight: 700; }
+  .fonti code { font: inherit; }
+  .fonti a { color: var(--accento); text-underline-offset: 3px; overflow-wrap: anywhere; }   /* anywhere: gli indirizzi lunghi vanno a capo su telefono */
+  .fonti a:hover { background: var(--accento); color: var(--fondo-fonti); text-decoration: none; }
+
+  /* le due griglie affiancate; sotto i 560px una sopra l'altra */
+  .confronto { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0 8px; }
+  @media (max-width: 560px) { .confronto { grid-template-columns: 1fr; } }
+  .confronto h3 { font-size: .85rem; margin: 0 0 8px; }
+  .confronto .griglia { gap: 2px; }
+  .confronto .cella { font-size: clamp(9px, 1.8vw, 12px); font-weight: 400; }
+  .g-tu .cella { color: var(--tu-testo); }
+  .g-caso .cella { color: var(--macchina); }
+  .confronto .cella.serie-tu { background: var(--tu); color: var(--fondo); font-weight: 700; }      /* serie più lunga */
+  .confronto .cella.serie-caso { background: var(--macchina); color: var(--fondo); font-weight: 700; }
+
+  /* tabella di confronto */
+  table { width: 100%; border-collapse: collapse; margin: 28px 0; font-size: .85rem; }
+  th, td { text-align: right; padding: 8px 6px; border-bottom: 1px solid var(--linea); vertical-align: top; }
+  th:first-child, td:first-child { text-align: left; }        /* la prima colonna (le etichette) a sinistra */
+  th { font-weight: 400; color: var(--testo-2); font-size: .75rem; }
+  td.tu { color: var(--tu-testo); }
+  td.macchina { color: var(--accento); font-weight: 400; }
+
+  /* ============================================================
+     GRAFICI (disegnati da JavaScript dentro i div .grafico)
+     ============================================================ */
+  .grafico { margin: 20px 0 36px; position: relative; }   /* relative: il tooltip si posiziona rispetto al grafico */
+  .grafico svg { display: block; width: 100%; height: 220px; overflow: visible; }
+  .asse text { fill: var(--testo-2); font: 11px var(--font); }
+  .asse path, .asse line { stroke: var(--linea); }
+  .barra { fill: var(--macchina); opacity: .75; }                    /* la distribuzione della moneta vera */
+  .barra.tuo { fill: var(--tu); opacity: 1; }                        /* la barra dove cade il lettore */
+  .segno line { stroke: var(--tu); stroke-width: 2; }
+  .segno text { fill: var(--tu-testo); font: 700 13px var(--font); }
+  .legenda { font-size: .75rem; color: var(--testo-2); margin-top: 4px; }
+  .legenda i { display: inline-block; width: 10px; height: 10px; vertical-align: -1px; margin-right: 6px; }
+  .tip { position: absolute; pointer-events: none; background: var(--testo); color: var(--fondo); font-size: 12px; line-height: 1.4;
+         padding: 6px 9px; white-space: nowrap; transform: translate(-50%, calc(-100% - 6px));
+         opacity: 0; transition: opacity .1s; }
+</style>
+
+<meta name="description" content="Inventa cento lanci di moneta: un programma che non sa niente di te proverà a prevederli. Poi li confrontiamo con una moneta vera.">
+<link rel="canonical" href="https://alea.news/prova-a-fare-il-caso/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="àlea">
+<meta property="og:title" content="Non siamo bravi a simulare la casualità">
+<meta property="og:description" content="Inventa cento lanci di moneta: un programma che non sa niente di te proverà a prevederli. Poi li confrontiamo con una moneta vera.">
+<meta property="og:url" content="https://alea.news/prova-a-fare-il-caso/">
+<meta property="og:image" content="https://alea.news/og/prova-a-fare-il-caso.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="it_IT">
+<meta property="article:published_time" content="2026-10-10">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Non siamo bravi a simulare la casualità">
+<meta name="twitter:description" content="Inventa cento lanci di moneta: un programma che non sa niente di te proverà a prevederli. Poi li confrontiamo con una moneta vera.">
+<meta name="twitter:image" content="https://alea.news/og/prova-a-fare-il-caso.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<title>Non siamo bravi a simulare la casualità · àlea</title>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  .alea-testa { display: flex; justify-content: center; background: #000; padding: 14px 16px 12px; position: relative; z-index: 30; }
+  .alea-logo { font-family: "General Sans", system-ui, sans-serif; font-weight: 700; font-size: 52px; letter-spacing: -0.07em; line-height: .9; color: #f2f0ea; text-decoration: none; }
+  .alea-logo:hover { color: #d4ff3a; }
+  .alea-firma { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .85rem; letter-spacing: .02em; color: #898781; margin: -12px 0 24px; }
+  .alea-firma a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+  .alea-firma a:hover { color: #eb6834; }
+
+  .alea-fondo { background: #000; color: #f2f0ea; font-family: "General Sans", system-ui, sans-serif; padding: 0 16px 64px; }
+  .alea-fondo * { box-sizing: border-box; }
+  .alea-fondo a { color: inherit; text-decoration: none; }
+  .alea-fondo-in { max-width: 1280px; margin: 0 auto; border-top: 1px solid #2a2a28; }
+  .alea-invito { display: block; padding: 72px 0 56px; font-weight: 400; font-size: clamp(2.4rem, 6vw, 5rem); line-height: 1; letter-spacing: -0.035em; max-width: 18ch; }
+  .alea-invito b { font-weight: 700; letter-spacing: -0.07em; }
+  .alea-invito:hover, .alea-invito:hover b { color: #d4ff3a; }
+  .alea-altri { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px 20px; margin: -16px 0 48px; }
+  .alea-altri a { display: flex; flex-direction: column; gap: 8px; }
+  .alea-altri .t { font-size: 1.5rem; line-height: 1.08; letter-spacing: -0.03em; }
+  .alea-altri .s { color: #8b8880; line-height: 1.45; }
+  .alea-altri a:hover .t { color: #d4ff3a; }
+  .alea-barra { background: #d4ff3a; color: #000; padding: 12px 16px; font-weight: 600; font-size: .95rem; }
+  .alea-nl { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: end; padding: 24px 0 8px; }
+  .alea-nl h3 { font-weight: 400; font-size: clamp(1.8rem, 3.5vw, 2.8rem); line-height: 1.05; letter-spacing: -0.03em; margin: 0; }
+  .alea-nl p { color: #8b8880; margin: 10px 0 0; }
+  .alea-iscr { display: flex; max-width: 460px; width: 100%; }
+  .alea-iscr input { flex: 1; min-width: 0; font: inherit; background: transparent; color: #f2f0ea; border: 1px solid #f2f0ea; border-right: 0; border-radius: 0; padding: 12px 14px; }
+  .alea-iscr button { font: inherit; font-weight: 600; background: #d4ff3a; color: #000; border: 1px solid #d4ff3a; border-radius: 0; padding: 12px 20px; cursor: pointer; }
+  .alea-iscr button:hover { background: #f2f0ea; border-color: #f2f0ea; }
+  .alea-piede { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 28px; border-top: 1px solid #2a2a28; margin-top: 64px; padding-top: 28px; }
+  .alea-piede h4 { font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 600; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #8b8880; margin: 0 0 12px; }
+  .alea-piede p { margin: 0; line-height: 1.5; color: #cfccc4; max-width: 46ch; }
+  .alea-piede p a { text-decoration: underline; text-underline-offset: 3px; }
+  .alea-col { display: flex; flex-direction: column; gap: 8px; }
+  .alea-col a { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }
+  .alea-col a:hover { color: #d4ff3a; }
+  @media (max-width: 860px) { .alea-nl, .alea-piede, .alea-altri { grid-template-columns: 1fr; } }
+</style>
+</head>
+
+<body>
+<header class="alea-testa"><a class="alea-logo" href="/">àlea</a></header>
+
+<!-- ============================================================
+     PRIMA SCHERMATA: SOLO IL GIOCO
+     Il lettore gioca prima di leggere qualsiasi cosa, così né il titolo né la storia
+     del libro RAND lo influenzano. L'articolo (più sotto) è nascosto finché non arriva a 100.
+     ============================================================ -->
+<section class="col schermata" id="schermata-gioco">
+  <!-- l'unico contesto prima del gioco: dove si è, senza anticipare il tema -->
+  <p class="testata-numero">àlea · numero 2</p>
+  <p class="apertura">Questa storia inizia con un gioco.</p>
+  <p>Immagina di lanciare una moneta cento volte, scegliendo ogni volta l'esito del lancio: <kbd>T</kbd> per testa, <kbd>C</kbd> per croce.</p>
+  <p>Mentre lanci, <span class="macchina">un programma</span> proverà a indovinare il tuo prossimo lancio guardando i risultati usciti fino a quel momento. Se preferisci, puoi anche <button class="link" id="salta" type="button">leggere e basta</button>.</p>
+
+  <div class="finestra">
+    <div class="barra-titolo">Tavola 1 · Cento lanci inventati</div>
+    <div class="dentro">
+      <!-- i numeri dentro <b id="..."> li aggiorna JavaScript a ogni lancio -->
+      <div class="stato">
+        <span>lancio <b class="tu" id="conta">000</b>/100</span>
+        <span>il programma ne ha indovinati <b class="macchina" id="presi">0</b> (<b class="macchina" id="perc">–</b>)</span>
+      </div>
+      <!-- pulsanti sopra la griglia: così restano visibili senza scorrere, anche su schermi bassi -->
+      <div class="tasti">
+        <button id="bt-t" type="button">[T] testa</button>
+        <button id="bt-c" type="button">[C] croce</button>
+      </div>
+      <!-- griglia vuota: le 100 caselle le crea JavaScript. aria-live: i lettori di schermo annunciano i cambiamenti -->
+      <div class="griglia" id="griglia" aria-live="polite"></div>
+      <div class="sotto">
+        <span>caselle <span class="macchina">grigie</span> = previste dal programma</span>
+        <button class="link" id="ricomincia" type="button">ricomincia</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     L'ARTICOLO: compare dopo il centesimo lancio, al posto del gioco.
+     I paragrafi vuoti con un id li scrive JavaScript, perché dipendono dai numeri del lettore.
+     ============================================================ -->
+<article id="articolo" hidden>
+  <div class="col">
+    <h1>Non siamo bravi a simulare la casualità</h1>
+<p class="alea-firma">di <a href="https://www.davidruffini.com" target="_blank" rel="noopener">David Ruffini</a> · 10 ottobre 2026</p>
+
+    <p>Nella seconda metà degli anni Quaranta i metodi Monte Carlo iniziarono a prendere sempre più piede all'interno della ricerca scientifica, specialmente nel campo della fisica, della statistica, della ricerca operativa e, in generale, nella matematica applicata. Questi approcci si ponevano come obiettivo di risolvere determinati problemi numerici, specialmente in sistemi complessi, basandosi sul campionamento casuale, con l'idea che un preciso risultato si possa approssimare abbastanza bene facendo tanti tentativi e facendo emergere uno schema dalle varie prove casuali eseguite. Del tipo, prova e vedi.</p>
+    <p>Il problema principale era che alla base del metodo Monte Carlo c'è la casualità e, se ancora oggi la maggior parte dei numeri «casuali» generati dai computer è in realtà pseudo-casuale, cioè prodotta da un algoritmo che, partendo dallo stesso punto, restituisce sempre la stessa sequenza, negli anni Quaranta la situazione era ancora più complessa. Nel 1947 il progetto RAND, nato dentro la Douglas Aircraft Company, costruì un apparecchio elettronico per generare un milione di cifre casuali e 100.000 valori di una distribuzione normale, derivati dalle prime 500.000 cifre del campione. Nel 1955 la RAND Corporation, diventata nel frattempo un ente indipendente, pubblicò il libro <em>A Million Random Digits with 100,000 Normal Deviates</em>, dove vennero inserite le cifre generate, creando un <em>gold standard</em> per le simulazioni Monte Carlo.</p>
+    
+    <!-- la tavola: la riempie JavaScript quando compare l'articolo. aria-hidden: è decorativa,
+         i lettori di schermo la saltano (la nota sotto spiega cos'è) -->
+    <div class="cifre" id="cifre" aria-hidden="true"></div>
+    <p class="nota">Una pagina come quelle del libro: a sinistra c'è il numero di riga, mentre a destra i gruppi di cifre simulate. <button class="link" id="altre-cifre" type="button">Puoi generarne di nuove, se vuoi!</button></p>
+
+    <!-- questo paragrafo parla a chi ha giocato; per chi sceglie "leggere e basta" JavaScript lo sostituisce
+         con una variante (vedi testoGiocoEsempio nella sezione 6) -->
+    <p id="testo-gioco">Generare numeri casuali non è qualcosa di semplice e spesso un essere umano fallisce nel tentativo di provarci. Nel gioco iniziale ti ho chiesto di simulare il lancio di una moneta, cercando di imitarne una vera il più fedelmente possibile e ora andremo a vedere quali sono stati i risultati e se il programma incaricato di prevedere la tua prossima mossa ti ha battuto.</p>
+
+    <!-- testo diverso se il lettore ha giocato o ha scelto di leggere e basta: lo scrive JavaScript -->
+    <p id="testo-confronto"></p>
+    <div class="confronto">
+      <div class="g-tu"><h3 class="tu" id="titolo-g-tu">la tua sequenza</h3><div class="griglia" id="g-tu"></div></div>
+      <div class="g-caso"><h3 class="macchina">una moneta vera</h3><div class="griglia" id="g-caso"></div></div>
+    </div>
+    <p class="nota">Evidenziata, in ciascuna sequenza, la serie più lunga di risultati uguali. <button class="link" id="rilancia" type="button">lancia un'altra moneta</button></p>
+
+    <table>
+      <thead><tr><th></th><th id="th-tu">tu</th><th>moneta vera</th><th>di solito, con una moneta*</th></tr></thead>
+      <tbody id="tabella"></tbody>
+    </table>
+    <p class="nota">* L'intervallo in cui cade il 90% delle sequenze vere simulate.</p>
+
+    <p id="testo-serie"></p>
+    <div class="grafico" id="ch-serie"></div>
+
+    <p id="testo-cambi"></p>
+    <div class="grafico" id="ch-cambi"></div>
+
+    <p id="testo-oracolo"></p>
+    <div class="grafico" id="ch-oracolo"></div>
+
+    <!-- spiegazione fonti -->
+    <p>L'idea della finta simulazione viene da un vecchio articolo del <em>New York Times</em> del 1998, firmato da Malcolm W. Browne, in cui si parla del professor Theodore P. Hill, un matematico che chiese ai suoi studenti di fare una cosa, una volta a casa: lanciare una moneta 200 volte e segnare i risultati, oppure far finta di farlo e inventare 200 risultati. Il giorno successivo, di fronte alla sorpresa degli studenti, Hill riusciva a riconoscere quasi tutti coloro che avevano inventato i risultati.</p>
+
+    <p>L'indizio su cui si basa Hill è la serie più lunga: in 200 lanci veri è quasi certo che prima o poi escano almeno sei teste o sei croci di fila, mentre chi inventa raramente si spinge così in là. Anche i cambi tra testa e croce, però, tradiscono chi inventa, perché tende ad alternare troppo. Sulla stessa intuizione, cioè che chi inventa una sequenza ha abitudini prevedibili, Scott Aaronson, professore e divulgatore scientifico, ha costruito un «oracolo» che prova a indovinare quale tasto, tra due, una persona premerà, in base a quelli già premuti: il programma che aveva il compito di prevedere la tua mossa nasce qui.</p>
+    <p class="nota"><button class="link" id="rigioca" type="button">Vuoi provare a rilanciare la moneta?</button></p>
+  </div>
+
+  <!-- FONTI E METODOLOGIA: fuori dalla colonna dell'articolo, su uno sfondo diverso
+       (larghezza piena), così si capisce subito che è un'appendice e non parte del testo -->
+  <footer class="fonti">
+    <div class="col">
+      <div class="barra-titolo">Fonti</div>
+      <ul>
+        <li>RAND Corporation, <em>A Million Random Digits with 100,000 Normal Deviates</em>, Free Press, 1955; riedizione RAND, 2001. Scheda e download gratuito delle cifre: <a href="https://www.rand.org/pubs/monograph_reports/MR1418.html">rand.org</a>.</li>
+        <li>Malcolm W. Browne, «Following Benford's Law, or Looking Out for No. 1», <em>The New York Times</em>, 4 agosto 1998 (<a href="https://www.nytimes.com/1998/08/04/science/following-benford-s-law-or-looking-out-for-no-1.html">nytimes.com</a>; copia consultabile su <a href="https://rexswain.com/benford.html">rexswain.com</a>). È l'articolo con l'esperimento di Theodore P. Hill.</li>
+        <li>Scott Aaronson, <em>Quantum Computing Since Democritus</em>, Cambridge University Press, 2013: il capitolo sul libero arbitrio racconta il programma che indovina i tasti premuti. Versione giocabile dell'«oracolo di Aaronson»: <a href="https://people.ischool.berkeley.edu/~nick/aaronson-oracle/">people.ischool.berkeley.edu</a> (codice su <a href="https://github.com/elsehow/aaronson-oracle">GitHub</a>).</li>
+        <li>Per la storia della macchina RAND (la «roulette elettronica» costruita con Douglas Aircraft nel 1947, le deviate normali ricavate dalle prime 500.000 cifre): <a href="https://en.wikipedia.org/wiki/A_Million_Random_Digits_with_100,000_Normal_Deviates">Wikipedia</a>.</li>
+      </ul>
+
+      <div class="barra-titolo">Metodologia</div>
+      <ul>
+        <li><strong>La moneta vera.</strong> Ogni lancio «vero» usa il generatore crittografico del browser (<code>crypto.getRandomValues</code>).</li>
+        <li><strong>Gli intervalli e i grafici.</strong> Vengono da una simulazione Monte Carlo, come quelle per cui era nato il libro RAND: a ogni lettura la pagina genera 20.000 sequenze vere da 100 lanci e ne misura teste, cambi e serie più lunga; il punteggio del programma è calcolato su 4.000 di queste. «Di solito» indica l'intervallo tra il 5° e il 95° percentile, cioè il 90% centrale delle sequenze. I numeri possono quindi variare di poco da una lettura all'altra.</li>
+        <li><strong>Il programma che prevede.</strong> È ispirato all'oracolo di Aaronson, non è una copia: ricorda cosa è stato scritto dopo ogni gruppo di 1, 2, 3, 4 o 5 lanci e fa votare tutti questi gruppi, dando più peso a quelli visti più spesso e con una preferenza più netta. Prevede ogni lancio prima di vederlo. Su sequenze davvero casuali indovina in media il 50%, come deve.</li>
+        <li><strong>La sequenza di esempio.</strong> Chi sceglie di leggere e basta vede una sequenza generata imitando le abitudini tipiche di chi inventa: dopo una serie di risultati uguali la probabilità di cambiare cresce (55% dopo un lancio, 65% dopo due, 85% dopo tre, 95% dopo quattro, sempre dopo cinque). Tra quelle generate viene mostrata la prima che ha tutte e tre le abitudini descritte nell'articolo.</li>
+</ul>
+
+    </div>
+  </footer>
+</article>
+
+<script>
+/* ==================================================================
+   IMPOSTAZIONI E PICCOLE FUNZIONI DI SERVIZIO
+   Convenzione delle sequenze: un array di numeri, 1 = testa, 0 = croce.
+   Es. [1, 1, 0, 1] = T T C T
+   ================================================================== */
+const N = 100;        // lanci da inserire
+const SIM = 20000;    // quante sequenze vere simulare per disegnare le distribuzioni
+
+// formattazione all'italiana: 20000 -> "20.000", 0.523 -> "52%"
+const fmt = (x) => x.toLocaleString("it-IT");
+const pct = (x, decimali = 0) => (x * 100).toLocaleString("it-IT", { maximumFractionDigits: decimali }) + "%";
+
+
+/* ==================================================================
+   1. LA MONETA VERA
+   crypto.getRandomValues è il generatore di numeri casuali "crittografico" del browser:
+   lo stesso usato per creare chiavi e password, molto più affidabile di Math.random().
+   Riempie un array di n byte (numeri da 0 a 255); di ogni byte teniamo solo l'ultimo bit
+   (x & 1 = 0 se il numero è pari, 1 se è dispari): è un lancio di moneta perfetto.
+   ================================================================== */
+function monetaVera(n = N) {
+  const byte = new Uint8Array(n);
+  crypto.getRandomValues(byte);
+  return Array.from(byte, (x) => x & 1);
+}
+
+
+/* ==================================================================
+   2. LE MISURE SU UNA SEQUENZA
+   ================================================================== */
+
+// Serie più lunga di risultati uguali di fila.
+// Scorre la sequenza tenendo il conto della serie in corso (cur): se il lancio è uguale
+// al precedente la allunga, altrimenti riparte da 1. Restituisce la lunghezza massima
+// e dove inizia e finisce (da/a), che servono per evidenziarla nella griglia.
+function serieLunga(s) {
+  let max = 1, cur = 1, fine = 0;
+  for (let i = 1; i < s.length; i++) {
+    cur = s[i] === s[i - 1] ? cur + 1 : 1;
+    if (cur > max) { max = cur; fine = i; }
+  }
+  return { lung: max, da: fine - max + 1, a: fine };
+}
+
+// Numero di cambi: quante volte un lancio è diverso dal precedente (da T a C o da C a T).
+// Con una moneta vera ogni cambio ha probabilità 1/2, quindi su 99 passaggi ce ne aspettiamo circa 50.
+function cambi(s) {
+  let n = 0;
+  for (let i = 1; i < s.length; i++) if (s[i] !== s[i - 1]) n++;
+  return n;
+}
+
+// Numero di teste: la somma dell'array, visto che le teste valgono 1 e le croci 0.
+const teste = (s) => s.reduce((somma, x) => somma + x, 0);
+
+
+/* ==================================================================
+   3. IL PROGRAMMA CHE PREVEDE (l'"oracolo", idea di Scott Aaronson)
+
+   Come ragiona: tiene una tabella di cosa hai scritto DOPO ogni gruppo di lanci.
+   Es. se dopo "T C" hai scritto 3 volte T e 1 volta C, la tabella contiene
+   "10" -> [1, 3]   (chiave = gli ultimi lanci come testo; valore = [quante C, quante T] dopo)
+
+   Guarda gruppi lunghi da 1 a 5 lanci (i "contesti"). Per prevedere il prossimo lancio,
+   ogni contesto che corrisponde agli ultimi lanci "vota" per T o per C:
+     - il voto è positivo (T) o negativo (C) a seconda di cosa è venuto dopo più spesso;
+     - pesa di più se la preferenza è netta e se il contesto è stato visto molte volte
+       (un contesto visto una volta sola è un indizio debole).
+   Vince il segno della somma dei voti.
+
+   Con una moneta vera la tabella non contiene regolarità vere, quindi il programma
+   indovina il 50% (l'abbiamo verificato simulando 4.000 sequenze). Con un essere umano,
+   che per esempio alterna troppo, la tabella "impara" le sue abitudini.
+   Nelle simulazioni: 57% su sequenze che cambiano nel 62% dei casi, 67% se cambiano nel 70%.
+   ================================================================== */
+class Oracolo {
+  constructor(k = 5) {
+    this.k = k;                 // lunghezza massima dei contesti
+    this.conti = new Map();     // la tabella: contesto -> [quante C dopo, quante T dopo]
+    this.storia = [];           // i lanci visti finora
+  }
+
+  // Previsione del prossimo lancio (1 = T, 0 = C), fatta PRIMA di vederlo
+  prevedi() {
+    const h = this.storia;
+    let voto = 0;
+    for (let k = 1; k <= Math.min(this.k, h.length); k++) {
+      const contesto = h.slice(-k).join("");     // gli ultimi k lanci, es. [1,0,1] -> "101"
+      const c = this.conti.get(contesto);
+      if (c) {
+        const n = c[0] + c[1];                   // quante volte abbiamo visto questo contesto
+        // (T - C) / (n + 1): preferenza tra -1 e +1, smorzata quando n è piccolo
+        // × √n: i contesti visti più spesso contano di più
+        voto += (c[1] - c[0]) / (n + 1) * Math.sqrt(n);
+      }
+    }
+    if (voto !== 0) return voto > 0 ? 1 : 0;
+    // nessun indizio (inizio partita o voti in pareggio): scommette che cambierai,
+    // perché è l'errore umano più comune
+    return h.length ? 1 - h[h.length - 1] : 1;
+  }
+
+  // Dopo aver visto il lancio vero, aggiorna la tabella per tutti i contesti da 1 a k
+  aggiungi(x) {
+    const h = this.storia;
+    for (let k = 1; k <= Math.min(this.k, h.length); k++) {
+      const contesto = h.slice(-k).join("");
+      const c = this.conti.get(contesto) || [0, 0];   // se il contesto è nuovo parte da zero
+      c[x]++;                                          // c[0] = croci, c[1] = teste
+      this.conti.set(contesto, c);
+    }
+    h.push(x);
+  }
+}
+
+// Fa giocare il programma su una sequenza intera e restituisce quanti lanci ha indovinato.
+// Serve per la moneta vera e per le simulazioni.
+function provaOracolo(s) {
+  const o = new Oracolo();
+  let indovinati = 0;
+  for (const x of s) {
+    if (o.prevedi() === x) indovinati++;
+    o.aggiungi(x);
+  }
+  return indovinati;
+}
+
+
+/* ==================================================================
+   4. LE DISTRIBUZIONI DI RIFERIMENTO
+   Invece di formule, simuliamo: generiamo 20.000 sequenze vere da 100 lanci e per ognuna
+   calcoliamo le misure. Così sappiamo, per esempio, quanto spesso una moneta vera
+   ha una serie più lunga di 4, 5, 6... È il "metodo Monte Carlo".
+   Il calcolo si fa una volta sola (alla fine del primo gioco) e poi si riusa (rif).
+   ================================================================== */
+let rif = null;
+function riferimenti() {
+  if (rif) return rif;
+  const serie = [], cam = [], tes = [], ora = [];
+  for (let i = 0; i < SIM; i++) {
+    const s = monetaVera();
+    serie.push(serieLunga(s).lung);
+    cam.push(cambi(s));
+    tes.push(teste(s));
+    if (i < 4000) ora.push(provaOracolo(s));   // il programma è più lento da simulare: bastano 4.000
+  }
+  // intervallo del 90%: il 5° e il 95° percentile (5% delle sequenze sta sotto, 5% sopra)
+  const int90 = (a) => {
+    const ordinati = [...a].sort((x, y) => x - y);
+    // quantileSorted può restituire un valore a metà tra due interi (es. 57.05): si arrotonda,
+    // perché teste, cambi e serie sono sempre numeri interi
+    return [Math.round(d3.quantileSorted(ordinati, 0.05)), Math.round(d3.quantileSorted(ordinati, 0.95))];
+  };
+  rif = { serie, cam, tes, ora, iSerie: int90(serie), iCam: int90(cam), iTes: int90(tes), iOra: int90(ora) };
+  return rif;
+}
+
+
+/* ==================================================================
+   5. L'INPUT DEL LETTORE
+   ================================================================== */
+const seq = [];                 // i lanci inseriti
+const presa = [];               // per ogni lancio: true se il programma l'aveva previsto
+let oracolo = new Oracolo();
+let indovinati = 0;
+
+// crea le 100 caselle vuote una volta sola; poi disegnaInput() ne cambia solo testo e classi
+const elGriglia = document.getElementById("griglia");
+const celle = [];
+for (let i = 0; i < N; i++) {
+  const d = document.createElement("div");
+  d.className = "cella";
+  elGriglia.append(d);
+  celle.push(d);
+}
+
+// Aggiorna griglia, contatori e pulsanti in base allo stato attuale
+function disegnaInput() {
+  celle.forEach((c, i) => {
+    c.textContent = i < seq.length ? (seq[i] ? "T" : "C") : "";
+    // le classi decidono l'aspetto (vedi CSS): piena, presa (prevista), prossima (cursore)
+    c.className = "cella"
+      + (i < seq.length ? " piena" : "")
+      + (presa[i] ? " presa" : "")
+      + (i === seq.length ? " prossima" : "");
+  });
+  document.getElementById("conta").textContent = String(seq.length).padStart(3, "0");   // 7 -> "007"
+  document.getElementById("presi").textContent = indovinati;
+  document.getElementById("perc").textContent = seq.length ? pct(indovinati / seq.length) : "–";
+  const finito = seq.length >= N;
+  document.getElementById("bt-t").disabled = finito;
+  document.getElementById("bt-c").disabled = finito;
+}
+
+// Un lancio del lettore (x = 1 testa, 0 croce)
+function lancia(x) {
+  if (seq.length >= N) return;
+  // IMPORTANTE: la previsione si calcola prima di registrare il lancio,
+  // altrimenti il programma "vedrebbe" la risposta
+  const previsione = oracolo.prevedi();
+  presa.push(previsione === x);
+  if (previsione === x) indovinati++;
+  oracolo.aggiungi(x);
+  seq.push(x);
+  disegnaInput();
+  if (seq.length === N) setTimeout(mostraRisultati, 300);   // breve pausa, poi i risultati
+}
+
+// Come si è arrivati all'articolo: "gioco" (100 lanci scritti dal lettore)
+// oppure "esempio" (ha scelto di leggere e basta: si usa una sequenza di esempio)
+let modo = "gioco";
+
+// Azzera tutto e torna alla schermata del gioco (pulsante "ricomincia" e, in fondo all'articolo, "riprovare")
+function ricomincia() {
+  seq.length = 0; presa.length = 0; indovinati = 0;
+  oracolo = new Oracolo();
+  vera = monetaVera();
+  modo = "gioco";
+  document.getElementById("articolo").hidden = true;
+  document.getElementById("schermata-gioco").hidden = false;
+  disegnaInput();
+  scrollTo(0, 0);
+}
+
+// collegamento di pulsanti e tastiera alle funzioni
+document.getElementById("bt-t").onclick = () => lancia(1);
+document.getElementById("bt-c").onclick = () => lancia(0);
+document.getElementById("ricomincia").onclick = ricomincia;
+document.getElementById("rigioca").onclick = ricomincia;
+document.getElementById("salta").onclick = leggiSoltanto;
+document.addEventListener("keydown", (e) => {
+  if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;   // ignora scorciatoie e tasto tenuto premuto
+  const k = e.key.toLowerCase();
+  if (k === "t" || k === "1") lancia(1);
+  else if (k === "c" || k === "0") lancia(0);
+});
+
+
+/* ==================================================================
+   6. I RISULTATI
+   ================================================================== */
+let vera = monetaVera();   // la sequenza vera mostrata accanto a quella del lettore
+
+// Riempie una griglia dei risultati, evidenziando la serie più lunga con la classe indicata
+function grigliaRisultato(el, s, classe) {
+  const lunga = serieLunga(s);
+  el.innerHTML = "";
+  s.forEach((x, i) => {
+    const d = document.createElement("div");
+    d.className = "cella" + (i >= lunga.da && i <= lunga.a ? " " + classe : "");
+    d.textContent = x ? "T" : "C";
+    el.append(d);
+  });
+}
+
+// "nel 12% dei casi" oppure, se è rarissimo, "in meno di una sequenza su cento"
+const quanto = (q) => (q < 0.01 ? "in meno di una sequenza su cento" : "nel " + pct(q) + " dei casi");
+
+// quota dei valori di un array che rispettano una condizione
+const quota = (arr, condizione) => arr.filter(condizione).length / arr.length;
+
+// Il paragrafo che introduce i risultati, in due versioni:
+// - quella per chi ha giocato è scritta nell'HTML (<p id="testo-gioco">): la salviamo qui all'avvio,
+//   così si può rimettere se il lettore prima legge l'esempio e poi gioca;
+// - quella per chi legge e basta, che non ha fatto il gioco e non può essere stato "battuto".
+const testoGiocoOriginale = document.getElementById("testo-gioco").innerHTML;
+const testoGiocoEsempio =
+  `Generare numeri casuali non è qualcosa di semplice e spesso un essere umano fallisce nel tentativo di provarci. ` +
+  `Nel gioco iniziale chiedevo di simulare il lancio di una moneta, cercando di imitarne una vera il più fedelmente ` +
+  `possibile: ora andremo a vedere i risultati di una sequenza di esempio e se il programma incaricato di prevedere ` +
+  `la mossa successiva l'ha battuta.`;
+
+let tavolaScritta = false;   // la tavola di cifre sotto il titolo si scrive la prima volta che compare l'articolo
+
+// Nasconde il gioco, mostra l'articolo e lo riempie con i numeri del lettore (o dell'esempio).
+// scorri = true: riporta la pagina in cima, all'inizio dell'articolo
+function mostraRisultati(scorri = true) {
+  const R = riferimenti();
+  // l'articolo va reso visibile PRIMA di disegnare: grafici e tavola misurano la larghezza
+  // della colonna, che per un elemento nascosto vale zero
+  document.getElementById("schermata-gioco").hidden = true;
+  document.getElementById("articolo").hidden = false;
+  if (!tavolaScritta) { tavolaScritta = true; scriviTavola(); }
+
+  const tu = { serie: serieLunga(seq).lung, cambi: cambi(seq), teste: teste(seq), oracolo: indovinati };
+  const ve = { serie: serieLunga(vera).lung, cambi: cambi(vera), teste: teste(vera), oracolo: provaOracolo(vera) };
+
+  // PAROLE CHE CAMBIANO SE IL LETTORE NON HA GIOCATO
+  // es = true quando si mostra la sequenza di esempio invece di quella del lettore
+  const es = modo === "esempio";
+  const chi = es ? "esempio" : "tu";   // etichetta corta: intestazione della tabella e segno nei grafici
+
+  // il paragrafo sul gioco: per chi ha giocato resta quello scritto nell'HTML,
+  // per chi legge e basta si usa la variante (il testo originale è salvato in testoGiocoOriginale)
+  document.getElementById("testo-gioco").innerHTML = es ? testoGiocoEsempio : testoGiocoOriginale;
+
+  document.getElementById("testo-confronto").innerHTML = es
+    ? `Visto che hai scelto di leggere e basta, usiamo una sequenza di esempio, costruita con le abitudini ` +
+      `più comuni di chi inventa. Eccola accanto a cento lanci di una moneta vera.`
+    : `Ecco la tua sequenza accanto a cento lanci di una moneta vera.`;
+  document.getElementById("titolo-g-tu").textContent = es ? "la sequenza di esempio" : "la tua sequenza";
+  document.getElementById("th-tu").textContent = chi;
+  document.getElementById("rigioca").textContent = es
+    ? "Vuoi provare anche tu con cento lanci?"
+    : "Vuoi riprovare con cento lanci nuovi?";
+
+  // --- le due griglie ---
+  grigliaRisultato(document.getElementById("g-tu"), seq, "serie-tu");
+  grigliaRisultato(document.getElementById("g-caso"), vera, "serie-caso");
+
+  // --- la tabella: [etichetta, tu, moneta vera, intervallo del 90%] ---
+  const righe = [
+    ["teste", tu.teste, ve.teste, R.iTes],
+    ["serie più lunga", tu.serie, ve.serie, R.iSerie],
+    ["cambi (da T a C o viceversa)", tu.cambi, ve.cambi, R.iCam],
+    ["lanci previsti dal programma", tu.oracolo, ve.oracolo, R.iOra],
+  ];
+  document.getElementById("tabella").innerHTML = righe.map((r) =>
+    `<tr><td>${r[0]}</td><td class="tu">${r[1]}</td><td class="macchina">${r[2]}</td><td>${r[3][0]}–${r[3][1]}</td></tr>`
+  ).join("");
+
+  // TESTI: le frasi generali valgono per tutti; quelle con i numeri del lettore li riportano
+  // senza giudicarli (è il grafico a mostrare se sono normali). Solo il paragrafo sul programma
+  // cambia davvero a seconda di com'è andata, perché è il colpo di scena del pezzo.
+
+  // --- grafico 1: serie più lunga ---
+  document.getElementById("testo-serie").innerHTML =
+    `La prima differenza sono le serie di risultati uguali. Chi inventa una sequenza tende a evitarle: ` +
+    `sei teste di fila sembrano «troppe» per essere casuali. Invece, su cento lanci veri, la serie più lunga ` +
+    `è quasi sempre di 5 lanci o più. ${es ? "Quella dell'esempio" : "La tua"} è di <span class="tu">${tu.serie}</span>; ` +
+    `una moneta vera si ferma a ${tu.serie} o meno ${quanto(quota(R.serie, (v) => v <= tu.serie))}. ` +
+    `Il grafico mostra quanto spesso capita ogni lunghezza in ${fmt(SIM)} sequenze vere simulate; ` +
+    `${es ? "la linea rossa è l'esempio" : "la linea rossa sei tu"}.`;
+  istogramma(document.getElementById("ch-serie"), {
+    valori: R.serie, dominio: [2, 16], tuo: tu.serie, etichettaX: "serie più lunga (lanci)", etichettaTu: chi,
+    tip: (d) => `serie più lunga di <b>${d.x}</b>: ${pct(d.p, 1)} delle sequenze vere`,
+  });
+
+  // --- grafico 2: cambi ---
+  document.getElementById("testo-cambi").innerHTML =
+    `Il secondo indizio sono i cambi. Con una moneta vera, dopo una testa viene una croce una volta su due: ` +
+    `in cento lanci ci si aspettano circa 50 cambi. Chi inventa tende ad alternare di più, per «compensare» ` +
+    `le serie che evita. ${es ? "L'esempio cambia" : "Tu hai cambiato"} <span class="tu">${tu.cambi} volte</span>: ` +
+    `la linea rossa mostra dove ${es ? "cade" : "cadi"}.`;
+  istogramma(document.getElementById("ch-cambi"), {
+    valori: R.cam, dominio: [25, 75], tuo: tu.cambi, etichettaX: "numero di cambi", etichettaTu: chi,
+    tip: (d) => `<b>${d.x}</b> cambi: ${pct(d.p, 1)} delle sequenze vere`,
+  });
+
+  // --- grafico 3: il programma ---
+  // la frase variabile: tre casi, confrontando il punteggio con l'intervallo tipico della moneta (R.iOra).
+  // La sequenza di esempio è scelta apposta per cadere nel primo caso (vedi sequenzaEsempio)
+  const n = `<span class="tu">${tu.oracolo} su 100</span>`;
+  const conChi = es ? "Con l'esempio" : "Con te";
+  let esito;
+  if (tu.oracolo > R.iOra[1]) {
+    esito = `${conChi} ne ha indovinati ${n}: con una moneta vera non ci arriva quasi mai.`;
+  } else if (tu.oracolo > 53) {
+    esito = `${conChi} ne ha indovinati ${n}: un po' più che con una moneta, ma non abbastanza per dire che ti ha letto nel pensiero.`;
+  } else {
+    esito = `${conChi} ne ha indovinati ${n}, quanto con una moneta vera: non gli hai lasciato abitudini da imparare, e non è da tutti.`;
+  }
+  document.getElementById("testo-oracolo").innerHTML =
+    `Poche serie lunghe e troppi cambi sono le abitudini più comuni, e le abitudini si possono prevedere. ` +
+    (es
+      ? `Durante il gioco, un piccolo programma prova a indovinare ogni lancio prima che venga scritto. ` +
+        `Non sa niente di chi gioca: si ricorda solo cosa è stato scritto dopo ogni gruppo di lanci e scommette che si ripeterà. `
+      : `Il programma che indovinava i tuoi lanci non sa niente di te: si ricorda solo cosa hai scritto dopo ogni gruppo di lanci ` +
+        `e scommette che lo rifarai. `) +
+    `${esito} Il grafico mostra il suo punteggio su ${fmt(R.ora.length)} sequenze vere, dove resta intorno a 50.`;
+  istogramma(document.getElementById("ch-oracolo"), {
+    valori: R.ora, dominio: [30, 80], tuo: tu.oracolo, etichettaX: "lanci previsti su 100", etichettaTu: chi,
+    tip: (d) => `<b>${d.x}</b> previsti: ${pct(d.p, 1)} delle sequenze vere`,
+  });
+
+  if (scorri) scrollTo(0, 0);
+}
+
+
+/* ==================================================================
+   6b. "LEGGERE E BASTA": LA SEQUENZA DI ESEMPIO
+   Per chi non vuole giocare, l'articolo usa una sequenza simulata con le abitudini
+   tipiche di chi inventa: dopo una serie di risultati uguali, la voglia di cambiare
+   cresce (55% dopo un lancio, 65% dopo due, 85% dopo tre, 95% dopo quattro, sempre dopo cinque).
+   Qui basta Math.random(): non deve essere un caso "perfetto", deve imitare una persona.
+   Tra le sequenze generate si tiene la prima che mostra tutte e tre le abitudini
+   (serie corte, troppi cambi, programma che indovina più del normale), così l'esempio
+   illustra davvero ciò che racconta l'articolo. Succede circa una volta su tre.
+   ================================================================== */
+function sequenzaEsempio() {
+  const R = riferimenti();
+  const voglia = [0, 0.55, 0.65, 0.85, 0.95, 1];   // probabilità di cambiare dopo 1, 2, 3, 4, 5 uguali
+  let s;
+  for (let tentativo = 0; tentativo < 1000; tentativo++) {
+    s = [];
+    let x = Math.random() < 0.5 ? 1 : 0, uguali = 0;
+    for (let i = 0; i < N; i++) {
+      s.push(x);
+      uguali++;
+      if (Math.random() < voglia[Math.min(uguali, 5)]) { x = 1 - x; uguali = 0; }
+    }
+    if (serieLunga(s).lung < R.iSerie[0] && cambi(s) > R.iCam[1] && provaOracolo(s) > R.iOra[1]) break;
+  }
+  return s;   // (in teoria, dopo 1000 tentativi falliti, l'ultima generata)
+}
+
+function leggiSoltanto() {
+  modo = "esempio";
+  const s = sequenzaEsempio();
+  // rifà il gioco "da solo": il programma prevede ogni lancio prima di vederlo, come con il lettore
+  seq.length = 0; presa.length = 0; indovinati = 0;
+  oracolo = new Oracolo();
+  for (const x of s) {
+    const previsione = oracolo.prevedi();
+    presa.push(previsione === x);
+    if (previsione === x) indovinati++;
+    oracolo.aggiungi(x);
+    seq.push(x);
+  }
+  disegnaInput();
+  mostraRisultati();
+}
+
+
+/* ==================================================================
+   7. L'ISTOGRAMMA (funzione unica, usata per tutti e tre i grafici)
+   Parametri:
+     valori     i risultati delle sequenze simulate (es. 20.000 serie più lunghe)
+     dominio    [minimo, massimo] dell'asse orizzontale
+     tuo        il valore del lettore, segnato con la linea rossa
+     etichettaX il nome dell'asse orizzontale
+     etichettaTu come chiamare il valore segnato: "tu" oppure "esempio"
+     tip        funzione che scrive il testo del tooltip per una barra
+   ================================================================== */
+function istogramma(el, { valori, dominio, tuo, etichettaX, etichettaTu = "tu", tip }) {
+  // se il grafico c'era già (es. "lancia un'altra moneta"), lo cancella e lo ridisegna
+  el.innerHTML = "";
+
+  // conta quante volte compare ogni valore e lo trasforma in proporzione (p tra 0 e 1)
+  const conteggi = d3.rollup(valori, (v) => v.length, (d) => d);
+  const dati = d3.range(dominio[0], dominio[1] + 1).map((x) => ({ x, p: (conteggi.get(x) || 0) / valori.length }));
+
+  // dimensioni: larghezza = quella della colonna, altezza fissa; m = margini interni
+  const W = el.clientWidth, H = 220, m = { alto: 28, destra: 8, basso: 36, sinistra: 8 };
+
+  // SCALE: funzioni che trasformano un dato in una posizione in pixel
+  //  x: una "banda" (colonna) per ogni valore possibile
+  //  y: da 0 alla proporzione massima, capovolta perché in SVG la y cresce verso il basso
+  const x = d3.scaleBand().domain(dati.map((d) => d.x)).range([m.sinistra, W - m.destra])
+    .paddingInner(dati.length > 30 ? 0.12 : 0.2);
+  const y = d3.scaleLinear().domain([0, d3.max(dati, (d) => d.p)]).range([H - m.basso, m.alto]);
+
+  // viewBox = sistema di coordinate interno dell'SVG
+  const svg = d3.select(el).append("svg").attr("viewBox", `0 0 ${W} ${H}`)
+    .attr("role", "img").attr("aria-label", `Distribuzione: ${etichettaX}. Valore segnato (${etichettaTu}): ${tuo}.`);
+
+  // ASSE X: mostra un'etichetta ogni "passo" valori, per non affollarle su schermi stretti
+  const passo = Math.ceil(dati.length / Math.max(4, Math.floor(W / 44)));
+  svg.append("g").attr("class", "asse").attr("transform", `translate(0,${H - m.basso})`)
+    .call(d3.axisBottom(x).tickValues(dati.map((d) => d.x).filter((v) => v % passo === 0)).tickSize(0).tickPadding(8))
+    .call((g) => g.append("text").attr("x", W - m.destra).attr("y", 32).attr("text-anchor", "end").text(etichettaX));
+
+  // BARRE: disegnate come percorsi (path) per arrotondare solo gli angoli in alto.
+  // M = sposta la penna, V = linea verticale, H = linea orizzontale, Q = curva, Z = chiudi
+  const r = Math.min(3, x.bandwidth() / 2);
+  const percorsoBarra = (d) => {
+    const x0 = x(d.x), w = x.bandwidth(), y0 = y(d.p), h = y(0) - y0;
+    if (h <= 0) return "";                          // proporzione zero: nessuna barra
+    const rr = Math.min(r, h);
+    return `M${x0},${y(0)}V${y0 + rr}Q${x0},${y0} ${x0 + rr},${y0}` +
+           `H${x0 + w - rr}Q${x0 + w},${y0} ${x0 + w},${y0 + rr}V${y(0)}Z`;
+  };
+  svg.append("g").selectAll("path").data(dati).join("path")
+    .attr("class", (d) => "barra" + (d.x === tuo ? " tuo" : ""))
+    .attr("d", percorsoBarra);
+
+  // SEGNO DEL LETTORE: linea verticale rossa con scritto "tu" (o "esempio").
+  // Se il valore è fuori dal grafico, la linea si ferma al bordo.
+  const xTu = x(Math.max(dominio[0], Math.min(dominio[1], tuo))) + x.bandwidth() / 2;
+  const segno = svg.append("g").attr("class", "segno");
+  segno.append("line").attr("x1", xTu).attr("x2", xTu).attr("y1", m.alto - 4).attr("y2", H - m.basso);
+  segno.append("text").attr("x", xTu).attr("y", m.alto - 10)
+    .attr("text-anchor", xTu > W - 60 ? "end" : xTu < 60 ? "start" : "middle")   // non uscire dai bordi
+    .text(tuo > dominio[1] ? `${etichettaTu} (${tuo}) →` : tuo < dominio[0] ? `← ${etichettaTu} (${tuo})` : etichettaTu);
+
+  // TOOLTIP: un div sopra il grafico. Per ogni barra c'è un rettangolo trasparente
+  // alto quanto tutto il grafico, così basta passare sopra la colonna (anche dove la barra è bassa)
+  const t = document.createElement("div");
+  t.className = "tip";
+  el.append(t);
+  svg.append("g").selectAll("rect").data(dati).join("rect")
+    .attr("x", (d) => x(d.x) - (x.step() - x.bandwidth()) / 2).attr("width", x.step())
+    .attr("y", m.alto).attr("height", H - m.basso - m.alto).attr("fill", "transparent")
+    .on("pointerenter pointermove", (e, d) => {
+      t.innerHTML = tip(d);
+      t.style.opacity = 1;
+      // da coordinate del viewBox a pixel reali (di solito coincidono)
+      t.style.left = (x(d.x) + x.bandwidth() / 2) * (el.clientWidth / W) + "px";
+      t.style.top = y(d.p) + "px";
+    })
+    .on("pointerleave", () => (t.style.opacity = 0));
+
+  // legenda: con due colori, il significato non deve dipendere solo dal colore
+  const leg = document.createElement("div");
+  leg.className = "legenda";
+  leg.innerHTML = `<i style="background:var(--macchina)"></i>${fmt(valori.length)} sequenze vere &nbsp; ` +
+                  `<i style="background:var(--tu)"></i>${etichettaTu}`;
+  el.append(leg);
+}
+
+// pulsante "lancia un'altra moneta": nuova sequenza vera, stesso lettore, senza scorrere la pagina
+document.getElementById("rilancia").onclick = () => { vera = monetaVera(); mostraRisultati(false); };
+
+// se cambia la larghezza della finestra (es. telefono ruotato) ridisegna i grafici alla nuova misura
+addEventListener("resize", () => {
+  if (!document.getElementById("articolo").hidden) mostraRisultati(false);
+});
+
+
+/* ==================================================================
+   8. MODALITÀ DI PROVA (?prova nell'indirizzo)
+   Simula un essere umano "tipico": parte da testa e cambia nel 62% dei casi
+   (una moneta vera cambierebbe nel 50%).
+   ================================================================== */
+if (new URLSearchParams(location.search).has("prova")) {
+  let x = 1;
+  for (let i = 0; i < N; i++) {
+    lancia(x);
+    if (Math.random() < 0.62) x = 1 - x;
+  }
+}
+
+/* ==================================================================
+   9. LA TAVOLA DI CIFRE CASUALI SOTTO IL TITOLO
+   Imita una pagina del libro RAND del 1955: ogni riga ha un numero a cinque cifre
+   e poi gruppi di cinque cifre casuali. Il libro aveva 20.000 righe (da 00000 a 19999):
+   mostriamo sempre le prime sei, da 00000 a 00005, come la prima pagina della tavola.
+   I numeri di riga restano fermi; cambiano solo le cifre.
+   Le cifre compaiono una alla volta, come battute da una telescrivente.
+   Il link "Puoi generarne di nuove" la riscrive con cifre nuove, senza ricaricare la pagina
+   (ricaricare farebbe ripartire il gioco).
+   ================================================================== */
+const RIGHE = 6;   // deve corrispondere all'altezza riservata nel CSS (.cifre: 6 righe)
+
+// una cifra da 0 a 9 dal generatore crittografico.
+// Scarta i byte da 250 a 255: 256 non è divisibile per 10, e tenendoli
+// le cifre da 0 a 5 uscirebbero un po' più spesso delle altre
+function cifraCasuale() {
+  const b = new Uint8Array(1);
+  do crypto.getRandomValues(b); while (b[0] >= 250);
+  return b[0] % 10;
+}
+
+let giroTavola = 0;   // numero dell'ultima scrittura avviata: serve a fermare quella vecchia se ne parte una nuova
+
+async function scriviTavola() {
+  const giro = ++giroTavola;
+  const el = document.getElementById("cifre");
+  el.textContent = "";   // cancella la tavola precedente, se c'era
+
+  // aspetta che il font sia caricato: serve per misurare quanto è largo un carattere
+  await document.fonts.ready;
+
+  // QUANTI GRUPPI ENTRANO IN UNA RIGA?
+  // Misura la larghezza di 10 caratteri, ne ricava quella di uno e calcola quanti caratteri
+  // stanno nella colonna. Una riga è "00000   " (8 caratteri) + gruppi da "12345 " (6 caratteri).
+  // Su computer entrano 10 gruppi (50 cifre, come nel libro), su telefono meno.
+  const metro = document.createElement("span");
+  metro.textContent = "0000000000";
+  el.append(metro);
+  const larghezzaCarattere = metro.getBoundingClientRect().width / 10;
+  metro.remove();
+  const caratteri = Math.floor(el.clientWidth / larghezzaCarattere);
+  const gruppi = Math.max(2, Math.min(10, Math.floor((caratteri - 8 + 1) / 6)));
+
+  // COSTRUISCE LE RIGHE: [{ numero: "00000", cifre: "48203 99127 ..." }, ...]
+  const righe = [];
+  for (let r = 0; r < RIGHE; r++) {
+    const gruppiRiga = [];
+    for (let g = 0; g < gruppi; g++) {
+      let gruppo = "";
+      for (let c = 0; c < 5; c++) gruppo += cifraCasuale();
+      gruppiRiga.push(gruppo);
+    }
+    righe.push({ numero: String(r).padStart(5, "0"), cifre: gruppiRiga.join(" ") });
+  }
+
+  // Ogni riga diventa due span: il numero (grigio, compare subito) e le cifre (si scrivono).
+  const spanCifre = righe.map((riga, r) => {
+    const n = document.createElement("span");
+    n.className = "numero";
+    n.textContent = riga.numero + "   ";
+    const c = document.createElement("span");
+    el.append(n, c, r < RIGHE - 1 ? "\n" : "");
+    return c;
+  });
+
+  // chi ha chiesto al sistema di ridurre le animazioni vede subito la tavola completa
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    spanCifre.forEach((c, r) => (c.textContent = righe[r].cifre));
+    return;
+  }
+
+  // L'EFFETTO DI SCRITTURA
+  // requestAnimationFrame chiama la funzione a ogni fotogramma (circa 60 al secondo).
+  // A ogni fotogramma calcola quanti caratteri dovrebbero essere già comparsi in base al tempo
+  // passato: così la velocità è la stessa su computer veloci e lenti.
+  const CARATTERI_AL_SECONDO = 220;
+  const carrello = document.createElement("span");
+  carrello.className = "carrello";
+  let inizio = null;
+
+  function fotogramma(t) {
+    if (giro !== giroTavola) return;        // è partita una tavola nuova: questa si ferma
+    if (inizio === null) inizio = t;
+    let daScrivere = Math.floor((t - inizio) / 1000 * CARATTERI_AL_SECONDO);
+    // riempie le righe in ordine: quelle finite per intero, quella in corso fino al punto giusto
+    for (let r = 0; r < RIGHE; r++) {
+      const testo = righe[r].cifre;
+      const quanti = Math.min(testo.length, daScrivere);
+      spanCifre[r].textContent = testo.slice(0, quanti);
+      if (quanti < testo.length) {          // questa è la riga in corso: il carrello va qui
+        spanCifre[r].after(carrello);
+        requestAnimationFrame(fotogramma);
+        return;
+      }
+      daScrivere -= testo.length;
+    }
+    carrello.remove();                      // tutte le righe scritte: fine
+  }
+  requestAnimationFrame(fotogramma);
+}
+
+document.getElementById("altre-cifre").onclick = scriviTavola;
+
+disegnaInput();   // primo disegno della griglia vuota
+</script>
+
+<section class="alea-fondo" data-nosnippet>
+  <div class="alea-fondo-in">
+    <a class="alea-invito" href="/">Questo è un progetto di <b>àlea</b>, dai un'occhiata anche agli altri →</a>
+    <div class="alea-altri"><a href="/litigi-tra-alleati/"><span class="t">I litigi tra gli alleati di governo</span><span class="s">Governano insieme e votano insieme la fiducia, ma in aula si contestano: 1.047 volte, alla Camera, dal 1948 al 2022.</span></a></div>
+    <div class="alea-barra">newsletter ↓</div>
+    <div class="alea-nl">
+      <div>
+        <h3>Un'email quando esce un nuovo articolo.</h3>
+        <p>Niente spam, niente cadenza fissa: solo quando c'è qualcosa da leggere.</p>
+      </div>
+      <form class="alea-iscr" action="https://aalea.substack.com/subscribe" method="get" target="_blank">
+        <input type="email" name="email" placeholder="la tua email" aria-label="email" required>
+        <button>iscriviti</button>
+      </form>
+    </div>
+    <footer class="alea-piede">
+      <div><h4>about</h4><p>àlea è un progetto di data e visual journalism ideato da <a href="https://www.davidruffini.com" target="_blank" rel="noopener">David Ruffini</a> per raccontare storie su cultura, società, politica, scienza e molto altro.</p></div>
+      <div class="alea-col"><h4>contatti</h4><a href="mailto:ciao@alea.news">ciao@alea.news</a></div>
+      
+    </footer>
+  </div>
+</section>
+</body>
+</html>

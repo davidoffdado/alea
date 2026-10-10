@@ -1,8 +1,17 @@
 // Elenco degli articoli, dal più recente. Le pagine degli articoli si importano in public/ con npm run articoli.
-// copertina: "litigi" ha una copertina disegnata apposta (src/components/Copertina.astro);
+// copertina: "litigi" e "moneta" hanno una copertina disegnata apposta (src/components/Copertina.astro);
 // per gli altri basta { colore, testo } oppure, più avanti, un'immagine.
 // bozza: true -> compare solo con npm run dev, mai nel sito pubblicato
 export const ARTICOLI = [
+  {
+    numero: 2,
+    data: "2026-10-10",
+    tema: "statistica",
+    titolo: "Non siamo bravi a simulare la casualità",
+    sommario: "Inventa cento lanci di moneta: un programma che non sa niente di te proverà a prevederli. Poi li confrontiamo con una moneta vera.",
+    url: "/prova-a-fare-il-caso/",
+    copertina: "moneta",
+  },
   {
     numero: 1,
     data: "2026-10-06",

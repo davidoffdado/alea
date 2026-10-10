@@ -1,0 +1,44 @@
+<!doctype html>
+<!-- Immagine di anteprima per i social (1200x630). Si rigenera con npm run og -->
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #000; font-family: "General Sans", sans-serif; }
+  /* la stessa copertina della home (src/components/Copertina.astro, "moneta"), in 1200x480 */
+  .cop { position: absolute; inset: 0 0 150px 0; background: #f4efe3; color: #1f1d19; font-family: "Courier Prime", monospace;
+         padding: 40px 56px; box-sizing: border-box; display: grid; grid-template-columns: auto 1fr; gap: 56px; align-items: center; }
+  .cifre { margin: 0; font: inherit; font-size: 17px; line-height: 1.7; white-space: pre; opacity: .75; }
+  .cifre .nr { color: #6b665c; }
+  .seqs { display: flex; flex-direction: column; gap: 28px; }
+  .eti { display: block; font-weight: 700; font-size: 20px; margin-bottom: 8px; }
+  .tu .eti { color: #c23a2b; }
+  .lanci { display: grid; grid-template-columns: repeat(12, 1fr); gap: 5px; }
+  .lanci span { aspect-ratio: 1; display: grid; place-items: center; font-weight: 700; font-size: 24px; }
+  .tu .lanci span { color: #c23a2b; }
+  .vera .lanci span { color: #3a3631; font-weight: 400; }
+  .tu .lanci .serie { background: #c23a2b; color: #f4efe3; }
+  .vera .lanci .serie { background: #3a3631; color: #f4efe3; font-weight: 700; }
+  .piede { position: absolute; left: 0; right: 0; bottom: 0; height: 150px; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; color: #f2f0ea; }
+  .tit { font-size: 46px; line-height: 1.05; letter-spacing: -0.03em; max-width: 840px; }
+  .logo { font-weight: 700; font-size: 84px; letter-spacing: -0.075em; color: #d4ff3a; line-height: 1; }
+</style>
+</head>
+<body>
+  <div class="cop">
+<pre class="cifre"><span class="nr">00000</span>   42319 11154 03251 23308 72156
+<span class="nr">00001</span>   70620 24707 55698 93602 34571
+<span class="nr">00002</span>   98366 96252 37233 20225 18184
+<span class="nr">00003</span>   16800 18131 52205 67204 51717
+<span class="nr">00004</span>   68675 20894 70285 81508 05570
+<span class="nr">00005</span>   28800 25635 88649 28598 16845</pre>
+    <div class="seqs">
+      <div class="tu"><span class="eti">inventata</span><div class="lanci"><span>C</span><span>T</span><span>C</span><span>T</span><span>T</span><span class="serie">C</span><span class="serie">C</span><span class="serie">C</span><span class="serie">C</span><span>T</span><span>C</span><span>T</span></div></div>
+      <div class="vera"><span class="eti">moneta vera</span><div class="lanci"><span>T</span><span>C</span><span>T</span><span class="serie">C</span><span class="serie">C</span><span class="serie">C</span><span class="serie">C</span><span class="serie">C</span><span class="serie">C</span><span class="serie">C</span><span>T</span><span>T</span></div></div>
+    </div>
+  </div>
+  <div class="piede"><div class="tit">Non siamo bravi a simulare la casualità</div><div class="logo">àlea</div></div>
+</body>
+</html>
