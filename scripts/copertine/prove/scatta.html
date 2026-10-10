@@ -1,0 +1,28 @@
+<!doctype html>
+<!-- Fa da "telefono": carica un articolo in un riquadro largo 390px (come un iPhone) e lo scorre fino a ?y=.
+     Serve da un server locale, così il riquadro è della stessa origine e si può scorrere.
+     Uso: scatta.html?p=/public/litigi-tra-alleati/index.html&y=1200&h=844 -->
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; background: #fff; overflow: hidden; }
+  iframe { display: block; width: 390px; border: 0; }
+</style>
+</head>
+<body>
+<iframe id="f"></iframe>
+<script>
+const q = new URLSearchParams(location.search);
+const f = document.getElementById("f");
+f.style.height = (q.get("h") || 844) + "px";
+f.src = q.get("p");
+f.onload = () => setTimeout(() => {
+  const w = f.contentWindow, y = +q.get("y") || 0;
+  w.scrollTo(0, y);
+  // le pagine con lo scorrimento a passi (scrollytelling) reagiscono all'evento scroll
+  w.dispatchEvent(new Event("scroll"));
+}, 2500);
+</script>
+</body>
+</html>

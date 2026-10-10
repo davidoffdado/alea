@@ -1,0 +1,22 @@
+<!doctype html>
+<!-- Ritaglio di una schermata da telefono per la copertina (4:5, 390x488 px del telefono).
+     ?s=nome della schermata in schermate/ (scattata a densità 2 in una finestra larga 500px, telefono di 390px a sinistra)
+     ?y=da dove parte il ritaglio, in px del telefono. Lo usa scripts/copertine.mjs -->
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; overflow: hidden; background: #f9f9f7; }
+  #r { width: 390px; height: 488px; background-repeat: no-repeat; background-size: 500px auto; }
+</style>
+</head>
+<body>
+<div id="r"></div>
+<script>
+const q = new URLSearchParams(location.search);
+const r = document.getElementById("r");
+r.style.backgroundImage = `url(schermate/${q.get("s")})`;
+r.style.backgroundPosition = `0 ${-(+q.get("y") || 0)}px`;
+</script>
+</body>
+</html>

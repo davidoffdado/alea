@@ -1,21 +1,22 @@
 <!doctype html>
-<!-- Immagine di anteprima per i social (1200x630): la copertina orizzontale (public/img/copertine/moneta-o.png)
-     con la cornice colorata e sotto il titolo. Si rigenera con npm run copertine e poi npm run og -->
+<!-- Immagine di anteprima per i social (1200x630): la figurina della home (public/img/copertine/moneta.png con l'ombra piena)
+     a sinistra, il titolo e àlea a destra. Si rigenera con npm run copertine e poi npm run og -->
 <html lang="it">
 <head>
 <meta charset="utf-8">
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,700&display=swap" rel="stylesheet">
 <style>
-  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #000; font-family: "General Sans", sans-serif; }
-  .cop { position: absolute; left: 0; top: 0; width: 1200px; height: 480px; box-sizing: border-box; border: 12px solid #c23a2b; border-bottom: 0;
-         background: url(../../public/img/copertine/moneta-o.png) center / cover; }
-  .piede { position: absolute; left: 0; right: 0; bottom: 0; height: 150px; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; color: #f2f0ea; }
-  .tit { font-size: 46px; line-height: 1.05; letter-spacing: -0.03em; max-width: 840px; }
-  .logo { font-weight: 700; font-size: 84px; letter-spacing: -0.075em; color: #d4ff3a; line-height: 1; }
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #000; font-family: "General Sans", sans-serif; color: #f2f0ea; }
+  .cop { position: absolute; left: 56px; top: 56px; width: 440px; height: 550px; box-sizing: border-box;
+         box-shadow: 22px 22px 0 #ff3b2f; background: #f9f9f7 url(../../public/img/copertine/moneta.png) top / cover; }
+  .num { position: absolute; left: 46px; top: 520px; background: #d4ff3a; color: #000; font-weight: 700; font-size: 64px; letter-spacing: -0.06em; line-height: 1; padding: 4px 16px 0 12px; }
+  .destra { position: absolute; left: 571px; right: 56px; top: 56px; bottom: 56px; display: flex; flex-direction: column; justify-content: space-between; }
+  .tit { font-size: 74px; line-height: .98; letter-spacing: -0.04em; }
+  .logo { font-weight: 700; font-size: 96px; letter-spacing: -0.075em; color: #d4ff3a; line-height: .8; }
 </style>
 </head>
 <body>
-  <div class="cop"></div>
-  <div class="piede"><div class="tit">Non siamo bravi a simulare la casualità</div><div class="logo">àlea</div></div>
+  <div class="cop"></div><div class="num">02</div>
+  <div class="destra"><div class="tit">Non siamo bravi a simulare la casualità</div><div class="logo">àlea</div></div>
 </body>
 </html>

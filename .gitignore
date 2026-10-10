@@ -2,3 +2,8 @@ node_modules/
 dist/
 .astro/
 .DS_Store
+
+# prove delle copertine: fotogrammi e pagine di confronto, solo in locale (scatta.html e server.mjs invece servono)
+scripts/copertine/prove/*
+!scripts/copertine/prove/scatta.html
+!scripts/copertine/prove/server.mjs

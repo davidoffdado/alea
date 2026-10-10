@@ -1,33 +1,44 @@
 ---
-// Copertina di un articolo, con una cornice colorata sopra e ai lati (alla The Pudding).
-// Due formati: orizzontale 16:10 per l'ultimo articolo (apertura), verticale 4:5 per le "figurine" della griglia.
-// Le immagini si generano con npm run copertine (scripts/copertine/<nome>.html -> public/img/copertine/<nome>-o.png e -v.png).
-// Al passaggio del mouse si ingrandisce l'immagine, la cornice resta ferma.
-//   copertina: "litigi" -> immagine; oppure { colore, testo } per le bozze (copertina tipografica)
-//   colore:    colore della cornice
+// Copertina di un articolo: un ritaglio verticale (4:5) dell'articolo visto da telefono, con dietro un blocco
+// di colore pieno spostato in basso a destra ("ombra piena") e il numero dell'articolo su un'etichetta lime.
+// Le immagini si generano con npm run copertine (vedi scripts/copertine.mjs).
+// Stessa figurina per l'ultimo articolo (più grande) e per la griglia.
+// Al passaggio del mouse la schermata scivola verso l'ombra, come un tasto premuto.
+//   copertina: "litigi" -> public/img/copertine/litigi.png; oppure { colore, testo } per le bozze (copertina tipografica)
+//   colore:    colore dell'ombra
+//   numero:    numero dell'articolo, sull'etichetta
 import { url } from "../config.js";
-const { copertina, colore = "#f2f0ea", apertura = false, titolo = "" } = Astro.props;
-const formato = apertura ? "o" : "v";
+const { copertina, colore = "#f2f0ea", numero, apertura = false, titolo = "" } = Astro.props;
 ---
-<div class:list={["cop", formato]} style={`--cornice: ${colore}`}>
+<div class:list={["cop", { grande: apertura }]} style={`--ombra: ${colore}`}>
   <div class="cop-in">
     {typeof copertina === "string" ? (
-      <img src={url(`img/copertine/${copertina}-${formato}.png`)} alt={titolo} loading={apertura ? "eager" : "lazy"} />
+      <img src={url(`img/copertine/${copertina}.png`)} alt={titolo} loading={apertura ? "eager" : "lazy"} />
     ) : (
       <div class="c-tipo" style={`background: ${copertina.colore}`}><span>{copertina.testo}</span></div>
     )}
   </div>
+  {numero && <div class="num">{String(numero).padStart(2, "0")}</div>}
 </div>
 
 <style>
-  .cop { position: relative; overflow: hidden; background: #222; border: 10px solid var(--cornice); border-bottom: 0; }
-  .cop.o { aspect-ratio: 16 / 10; }
-  .cop.v { aspect-ratio: 4 / 5; border-width: 8px; border-bottom: 0; }
-  .cop-in { position: absolute; inset: 0; transition: transform .5s ease; }
-  :global(a.art:hover) .cop-in { transform: scale(1.03); }
-  img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  /* --sp = di quanto è spostata l'ombra; il margine lascia il posto all'ombra, che sporge in basso a destra */
+  .cop { --sp: 14px; position: relative; aspect-ratio: 4 / 5; margin: 0 var(--sp) var(--sp) 0; }
+  .cop.grande { --sp: 22px; }
+  .cop::before { content: ""; position: absolute; inset: var(--sp) calc(-1 * var(--sp)) calc(-1 * var(--sp)) var(--sp); background: var(--ombra); }
+  .cop-in { position: absolute; inset: 0; overflow: hidden; background: #f9f9f7; transition: transform .25s ease; }
+  :global(a.art:hover) .cop-in { transform: translate(calc(var(--sp) / 2), calc(var(--sp) / 2)); }
+  img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+
+  /* il numero dell'articolo, su un'etichetta lime che sporge a sinistra */
+  .num { position: absolute; left: -6px; bottom: 22px; background: #d4ff3a; color: #000; font-weight: 700; font-size: 2.6rem;
+         letter-spacing: -0.06em; line-height: 1; padding: 3px 12px 0 10px; transition: transform .25s ease; }
+  .grande .num { font-size: 4.2rem; left: -10px; bottom: 34px; padding: 4px 18px 0 14px; }
+  :global(a.art:hover) .num { transform: translate(calc(var(--sp) / 2), calc(var(--sp) / 2)); }
 
   /* copertina tipografica: un colore e un numero o una parola */
   .c-tipo { position: absolute; inset: 0; display: grid; place-items: center; color: #111; }
   .c-tipo span { font-weight: 700; font-size: clamp(4.5rem, 10vw, 8.5rem); line-height: 1; letter-spacing: -0.06em; }
+
+  @media (max-width: 560px) { .cop, .cop.grande { --sp: 12px; } .grande .num { font-size: 3rem; } }
 </style>
