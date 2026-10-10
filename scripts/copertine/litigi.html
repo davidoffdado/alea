@@ -1,0 +1,74 @@
+<!doctype html>
+<!-- Copertina del n. 1 (litigi tra alleati): le teste dei politici e i simboli dei partiti cadute e ammucchiate,
+     come nella prima slide del carosello (discorsi_camera/applausi/carosello/b3_pudding_template.html).
+     ?f=o orizzontale 1600x1000 (ultimo articolo), ?f=v verticale 1200x1500 (figurina). Si rigenera con npm run copertine -->
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; overflow: hidden; background: #f9f9f7; }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<svg id="svg"></svg>
+<script>
+const f = new URLSearchParams(location.search).get("f") || "o";
+// misure per formato: larghezza, altezza, raggio delle teste (minimo + variabile), quanto si allarga il mucchio
+const M = f === "v" ? { W: 1200, H: 1500, r0: 96, dr: 40, spread: 300, suolo: 1500 - 120 }
+                    : { W: 1600, H: 1000, r0: 74, dr: 32, spread: 420, suolo: 1000 - 90 };
+const svg = document.getElementById("svg");
+svg.setAttribute("width", M.W); svg.setAttribute("height", M.H);
+svg.setAttribute("viewBox", `0 0 ${M.W} ${M.H}`);
+const NS = "http://www.w3.org/2000/svg";
+const el = (p, t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); p.append(e); return e; };
+const defs = el(svg, "defs", {});
+
+// la linea del tempo su cui cadono
+el(svg, "line", { x1: 0, x2: M.W, y1: M.suolo + 2, y2: M.suolo + 2, stroke: "#0b0b0b", "stroke-width": 3 });
+
+// Piccola simulazione: le teste cadono una dopo l'altra, si urtano, rotolano e si fermano.
+// Caso con seme fisso: il mucchio è sempre lo stesso.
+let seme = 11;
+const caso = () => (seme = (seme * 16807) % 2147483647) / 2147483647;
+const TESTE = ["silvio_berlusconi", "umberto_bossi", "matteo_salvini", "mario_draghi", "giuseppe_conte", "enrico_letta", "renato_brunetta",
+  "gianfranco_fini", "pier_ferdinando_casini", "marco_pannella", "loris_fortuna", "angelo_castelli", "sergio_castellaneta", "alessandro_cè",
+  "filippo_scerra", "giovanni_roberti", "salvatore_frasca", "attilio_piccioni", "randolfo_pacciardi"].map((f) => ({ f, logo: false }))
+  .concat(["dc_1943", "fi_1994", "lega_2018", "pd", "ccd"].map((f) => ({ f, logo: true })));
+for (let i = TESTE.length - 1; i > 0; i--) { const j = Math.floor(caso() * (i + 1)); [TESTE[i], TESTE[j]] = [TESTE[j], TESTE[i]]; }
+TESTE.forEach((t, i) => {
+  t.r = M.r0 + caso() * M.dr;
+  t.x = M.W / 2 + (caso() + caso() + caso() - 1.5) * M.spread; t.y = -200 - i * 2.6 * M.r0;
+  t.px = t.x; t.py = t.y;
+  t.rot = (caso() - .5) * 80;
+});
+for (let passo = 0; passo < 7000; passo++) {
+  TESTE.forEach((t) => {                                     // gravità, con un po' di attrito
+    const vx = (t.x - t.px) * .9, vy = (t.y - t.py) * .99;
+    t.px = t.x; t.py = t.y;
+    t.x += vx; t.y += vy + .6;
+  });
+  for (let k = 0; k < 4; k++) {
+    for (let i = 0; i < TESTE.length; i++) for (let j = i + 1; j < TESTE.length; j++) {
+      const p = TESTE[i], q = TESTE[j], dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy) || 1, min = p.r + q.r + 4;
+      if (d < min) { const m = (min - d) / 2 / d; p.x -= dx * m; p.y -= dy * m; q.x += dx * m; q.y += dy * m;
+        p.px += (p.x - p.px) * .35; q.px += (q.x - q.px) * .35; }
+    }
+    TESTE.forEach((t) => {
+      if (t.y > M.suolo - t.r) { t.y = M.suolo - t.r; t.px = t.x - (t.x - t.px) * .2; }   // il suolo frena chi ci rotola sopra
+      t.x = Math.min(M.W - 10 - t.r, Math.max(10 + t.r, t.x));
+    });
+  }
+}
+TESTE.forEach((t, n) => {
+  const id = "c" + n;
+  const g = el(svg, "g", { transform: `rotate(${t.rot.toFixed(1)} ${t.x} ${t.y})` });
+  el(el(defs, "clipPath", { id }), "circle", { cx: t.x, cy: t.y, r: t.r });
+  el(g, "circle", { cx: t.x, cy: t.y, r: t.r + 3, fill: "#fff" });
+  if (t.logo) el(g, "image", { href: `../../public/litigi-tra-alleati/loghi/${t.f}.png`, x: t.x - t.r * .7, y: t.y - t.r * .7, width: t.r * 1.4, height: t.r * 1.4, preserveAspectRatio: "xMidYMid meet" });
+  else el(g, "image", { href: `../../public/litigi-tra-alleati/foto/${t.f}.jpg`, x: t.x - t.r, y: t.y - t.r, width: 2 * t.r, height: 2 * t.r, preserveAspectRatio: "xMidYMid slice", "clip-path": `url(#${id})` });
+  el(g, "circle", { cx: t.x, cy: t.y, r: t.r, fill: "none", stroke: "#eb6834", "stroke-width": f === "v" ? 8 : 7 });
+});
+</script>
+</body>
+</html>

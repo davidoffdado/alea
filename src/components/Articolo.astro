@@ -10,7 +10,7 @@ const Titolo = apertura ? "h1" : "h2";
 const href = !a.url ? "#" : /^https?:/.test(a.url) ? a.url : url(a.url);
 ---
 <a class:list={["art", { apertura }]} href={href} target="_blank" rel="noopener">
-  <Copertina copertina={a.copertina} />
+  <Copertina copertina={a.copertina} colore={a.colore} apertura={apertura} titolo={a.titolo} />
   <div class="txt">
     <div class="meta mono">
       <span class="n">{numero}</span><span>{data}</span><span>{a.tema}</span>

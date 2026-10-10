@@ -1,6 +1,7 @@
 // Elenco degli articoli, dal più recente. Le pagine degli articoli si importano in public/ con npm run articoli.
-// copertina: "litigi" e "moneta" hanno una copertina disegnata apposta (src/components/Copertina.astro);
-// per gli altri basta { colore, testo } oppure, più avanti, un'immagine.
+// copertina: nome dell'immagine in public/img/copertine (<nome>-o.png orizzontale, <nome>-v.png verticale),
+//   generata da scripts/copertine/<nome>.html con npm run copertine; per le bozze basta { colore, testo }.
+// colore: la cornice della copertina, sopra e ai lati (alla The Pudding).
 // bozza: true -> compare solo con npm run dev, mai nel sito pubblicato
 export const ARTICOLI = [
   {
@@ -11,6 +12,7 @@ export const ARTICOLI = [
     sommario: "Inventa cento lanci di moneta: un programma che non sa niente di te proverà a prevederli. Poi li confrontiamo con una moneta vera.",
     url: "/prova-a-fare-il-caso/",
     copertina: "moneta",
+    colore: "#c23a2b",
   },
   {
     numero: 1,
@@ -20,6 +22,7 @@ export const ARTICOLI = [
     sommario: "Governano insieme e votano insieme la fiducia, ma in aula si contestano: 1.047 volte, alla Camera, dal 1948 al 2022.",
     url: "/litigi-tra-alleati/",
     copertina: "litigi",
+    colore: "#eb6834",
   },
   // segnaposto per vedere la griglia mentre si lavora
   { bozza: true, tema: "statistica", titolo: "Il tuo numero «a caso» non è casuale", sommario: "Perché tutti scelgono il 7.", copertina: { colore: "#b9a5ff", testo: "7" } },

@@ -1,50 +1,21 @@
 <!doctype html>
-<!-- Immagine di anteprima per i social (1200x630). Si rigenera con npm run og -->
+<!-- Immagine di anteprima per i social (1200x630): la copertina orizzontale (public/img/copertine/moneta-o.png)
+     con la cornice colorata e sotto il titolo. Si rigenera con npm run copertine e poi npm run og -->
 <html lang="it">
 <head>
 <meta charset="utf-8">
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,700&display=swap" rel="stylesheet">
 <style>
   html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #000; font-family: "General Sans", sans-serif; }
-  /* la stessa copertina della home (src/components/Copertina.astro, "moneta"), ritagliata in 1200x480 */
-  .cop { position: absolute; left: 0; top: 0; width: 1200px; height: 480px; display: block; }
+  .cop { position: absolute; left: 0; top: 0; width: 1200px; height: 480px; box-sizing: border-box; border: 12px solid #c23a2b; border-bottom: 0;
+         background: url(../../public/img/copertine/moneta-o.png) center / cover; }
   .piede { position: absolute; left: 0; right: 0; bottom: 0; height: 150px; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; color: #f2f0ea; }
   .tit { font-size: 46px; line-height: 1.05; letter-spacing: -0.03em; max-width: 840px; }
   .logo { font-weight: 700; font-size: 84px; letter-spacing: -0.075em; color: #d4ff3a; line-height: 1; }
 </style>
 </head>
 <body>
-  <svg class="cop" id="cop" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
-    <defs>
-      <filter id="bic" color-interpolation-filters="sRGB">
-        <feColorMatrix type="saturate" values="0" />
-        <feComponentTransfer>
-          <feFuncR type="table" tableValues="0.12 0.957" />
-          <feFuncG type="table" tableValues="0.11 0.937" />
-          <feFuncB type="table" tableValues="0.10 0.89" />
-        </feComponentTransfer>
-      </filter>
-      <clipPath id="sx"><polygon points="0,0 930,0 690,1000 0,1000" /></clipPath>
-      <clipPath id="dx"><polygon points="970,0 1600,0 1600,1000 730,1000" /></clipPath>
-    </defs>
-    <rect width="1600" height="1000" fill="#f4efe3" />
-    <g clip-path="url(#sx)"><image href="../../public/img/eniac_operatrici.jpg" x="-60" y="0" width="1080" height="1000" preserveAspectRatio="xMidYMid slice" filter="url(#bic)" /></g>
-    <g clip-path="url(#dx)"><image href="../../public/img/ibm_704.jpg" x="700" y="0" width="900" height="1000" preserveAspectRatio="xMidYMid slice" filter="url(#bic)" /></g>
-    <!-- la linea un po' più in alto che in home: qui la foto è tagliata sopra e sotto -->
-    <g transform="translate(0,-130)">
-    <path id="alone" fill="none" stroke="#f4efe3" stroke-width="26" stroke-linejoin="round" stroke-linecap="round" />
-    <path id="linea" fill="none" stroke="#c23a2b" stroke-width="12" stroke-linejoin="round" stroke-linecap="round" />
-    </g>
-  </svg>
+  <div class="cop"></div>
   <div class="piede"><div class="tit">Non siamo bravi a simulare la casualità</div><div class="logo">àlea</div></div>
-<script>
-  // stessa passeggiata della copertina in home (seme 61)
-  function seme(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-  const r = seme(61);
-  let v = 0;
-  const d = "M" + Array.from({ length: 101 }, (_, i) => { if (i) v += r() < .5 ? 1 : -1; return `${40 + i * 15.2},${560 - v * 26}`; }).join("L");
-  document.getElementById("alone").setAttribute("d", d);
-  document.getElementById("linea").setAttribute("d", d);
-</script>
 </body>
 </html>
