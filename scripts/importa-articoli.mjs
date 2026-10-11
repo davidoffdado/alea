@@ -6,7 +6,7 @@
 // e il tema comune degli articoli (caratteri e colori, scripts/tema.mjs).
 // Uso: npm run articoli   (poi controllare con npm run dev e pubblicare con npm run deploy)
 // Le copie in public/ fanno parte del repository: il sito si costruisce anche senza i progetti originali.
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { ARTICOLI as ELENCO } from "../src/data/articoli.js";
 import { SITO } from "../src/config.js";
 import { CSS_TEMA, FONT_TEMA, TESTI_TEMA } from "./tema.mjs";
@@ -25,6 +25,11 @@ const ARTICOLI = [
     risorse: ["foto", "loghi"],                     // cartelle usate dalla pagina con percorsi relativi
   },
 ];
+
+// gli articoli fatti con l'editor (strumenti/editor-articoli.html) stanno in articoli/<cartella>.html, un file solo
+// con dentro anche immagini e dati: si aggiungono da soli all'elenco (serve comunque la voce in src/data/articoli.js)
+if (existsSync("articoli")) for (const f of readdirSync("articoli").filter((f) => f.endsWith(".html")))
+  ARTICOLI.push({ cartella: f.replace(/\.html$/, ""), sorgente: "articoli", pagina: f, risorse: [] });
 
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
@@ -165,7 +170,10 @@ for (const a of ARTICOLI) {
   html = html.replace(/<title>[\s\S]*?<\/title>\s*/i, "");                    // il titolo lo riscrive metaTag
   if (!inserisci(/<\/head>/, () => `${metaTag(info, a.cartella)}${STILE}${FONT_TEMA}\n<style id="alea-tema">${CSS_TEMA[a.cartella] || ""}\n</style>\n</head>`)) throw new Error(`${a.cartella}: pagina senza </head>`);
   if (!inserisci(/<body([^>]*)>/, (m) => `${m}${TESTATA}`)) throw new Error(`${a.cartella}: pagina senza <body>`);
-  if (!inserisci(/<\/h1>/, () => `</h1>${firma(info)}`)) throw new Error(`${a.cartella}: niente <h1>, non so dove mettere la firma`);   // sotto il primo titolo
+  // la firma va nel posto riservato dall'editor degli articoli (<p ... id="alea-firma">), altrimenti sotto il primo titolo
+  const posto = /<p[^>]*id="alea-firma"[^>]*>[\s\S]*?<\/p>/;
+  if (posto.test(html)) html = html.replace(posto, firma(info).trim());
+  else if (!inserisci(/<\/h1>/, () => `</h1>${firma(info)}`)) throw new Error(`${a.cartella}: niente <h1>, non so dove mettere la firma`);
   if (!inserisci(/<\/body>/, () => `${fondo(info)}\n</body>`)) throw new Error(`${a.cartella}: pagina senza </body>`);
   for (const [cerca, metti] of TESTI_TEMA[a.cartella] || []) html = html.replaceAll(cerca, metti);   // testi sui colori (scripts/tema.mjs)
   writeFileSync(`${dest}/index.html`, html);
