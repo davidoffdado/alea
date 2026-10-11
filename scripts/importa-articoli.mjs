@@ -2,12 +2,14 @@
 // così vengono pubblicate su alea.news/<cartella>/ insieme al resto.
 // Durante la copia aggiunge: la testata per tornare ad àlea, la firma sotto il titolo (autore e data),
 // il fondo di àlea (invito agli altri articoli, newsletter, about, contatti, social) e i meta tag per i social,
-// presi da src/data/articoli.js (titolo, sommario, data), da src/config.js e da public/og/<cartella>.png.
+// presi da src/data/articoli.js (titolo, sommario, data), da src/config.js e da public/og/<cartella>.png,
+// e il tema comune degli articoli (caratteri e colori, scripts/tema.mjs).
 // Uso: npm run articoli   (poi controllare con npm run dev e pubblicare con npm run deploy)
 // Le copie in public/ fanno parte del repository: il sito si costruisce anche senza i progetti originali.
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { ARTICOLI as ELENCO } from "../src/data/articoli.js";
 import { SITO } from "../src/config.js";
+import { CSS_TEMA, FONT_TEMA, TESTI_TEMA } from "./tema.mjs";
 
 const ARTICOLI = [
   {
@@ -41,7 +43,7 @@ const STILE = `
   .alea-logo:hover { color: #d4ff3a; }
   .alea-firma { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .85rem; letter-spacing: .02em; color: #898781; margin: -12px 0 24px; }
   .alea-firma a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
-  .alea-firma a:hover { color: #eb6834; }
+  .alea-firma a:hover { color: #000; background: #d4ff3a; }
 
   .alea-fondo { background: #000; color: #f2f0ea; font-family: "General Sans", system-ui, sans-serif; padding: 0 16px 64px; }
   .alea-fondo * { box-sizing: border-box; }
@@ -161,10 +163,11 @@ for (const a of ARTICOLI) {
     return fatto;
   };
   html = html.replace(/<title>[\s\S]*?<\/title>\s*/i, "");                    // il titolo lo riscrive metaTag
-  if (!inserisci(/<\/head>/, () => `${metaTag(info, a.cartella)}${STILE}\n</head>`)) throw new Error(`${a.cartella}: pagina senza </head>`);
+  if (!inserisci(/<\/head>/, () => `${metaTag(info, a.cartella)}${STILE}${FONT_TEMA}\n<style id="alea-tema">${CSS_TEMA[a.cartella] || ""}\n</style>\n</head>`)) throw new Error(`${a.cartella}: pagina senza </head>`);
   if (!inserisci(/<body([^>]*)>/, (m) => `${m}${TESTATA}`)) throw new Error(`${a.cartella}: pagina senza <body>`);
   if (!inserisci(/<\/h1>/, () => `</h1>${firma(info)}`)) throw new Error(`${a.cartella}: niente <h1>, non so dove mettere la firma`);   // sotto il primo titolo
   if (!inserisci(/<\/body>/, () => `${fondo(info)}\n</body>`)) throw new Error(`${a.cartella}: pagina senza </body>`);
+  for (const [cerca, metti] of TESTI_TEMA[a.cartella] || []) html = html.replaceAll(cerca, metti);   // testi sui colori (scripts/tema.mjs)
   writeFileSync(`${dest}/index.html`, html);
   console.log(`✓ ${a.cartella}`);
 }

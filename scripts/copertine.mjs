@@ -1,5 +1,5 @@
 // Genera le copertine degli articoli (public/img/copertine/<nome>.png, 4:5) ritagliando una schermata dell'articolo
-// visto da telefono (scripts/copertine/schermate/<nome>.png). Il ritaglio lo fa scripts/copertine/ritaglio.html,
+// visto da telefono (scripts/copertine/schermate/<nome>.png, scattata con scripts/copertine/telefono.html). Il ritaglio lo fa scripts/copertine/ritaglio.html,
 // fotografato con Edge in modalità headless a densità 2 (780x976 px).
 // La cornice colorata non è nell'immagine: la aggiunge src/components/Copertina.astro, con il colore di src/data/articoli.js.
 //
@@ -12,8 +12,8 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const COPERTINE = [
-  { nome: "litigi", y: 0 },      // il governo Berlusconi II: emiciclo e citazione di Cè
-  { nome: "moneta", y: 2090 },   // le due griglie, inventata e vera
+  { nome: "litigi", y: 305 },    // la scena di Cè (governo Berlusconi II): titolo, alleati e dialogo
+  { nome: "moneta", y: 2850 },   // la serie più lunga: testo e grafico, con il lettore in nero
 ];
 
 const EDGE = ["C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Microsoft/Edge/Application/msedge.exe"].find(existsSync);

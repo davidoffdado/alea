@@ -12,7 +12,7 @@ export const ARTICOLI = [
     sommario: "Inventa cento lanci di moneta: un programma che non sa niente di te proverà a prevederli. Poi li confrontiamo con una moneta vera.",
     url: "/prova-a-fare-il-caso/",
     copertina: "moneta",
-    colore: "#ff3b2f",
+    colore: "#d4ff3a",
   },
   {
     numero: 1,
@@ -22,7 +22,7 @@ export const ARTICOLI = [
     sommario: "Governano insieme e votano insieme la fiducia, ma in aula si contestano: 1.047 volte, alla Camera, dal 1948 al 2022.",
     url: "/litigi-tra-alleati/",
     copertina: "litigi",
-    colore: "#ff6b2c",
+    colore: "#d4ff3a",
   },
   // segnaposto per vedere la griglia mentre si lavora
   { bozza: true, tema: "statistica", titolo: "Il tuo numero «a caso» non è casuale", sommario: "Perché tutti scelgono il 7.", copertina: { colore: "#b9a5ff", testo: "7" } },
