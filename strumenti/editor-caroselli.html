@@ -1,0 +1,422 @@
+<!doctype html>
+<!--
+  EDITOR DEI CAROSELLI DI ÀLEA: si apre con un doppio clic (funziona anche senza internet, tranne i caratteri).
+  A sinistra le slide, al centro l'anteprima, a destra le impostazioni della slide scelta.
+  Ogni slide è disegnata su un <canvas> 1080×1350 nello stile dei caroselli (foto in bianco e nero a tutta pagina,
+  testo con le righe evidenziate, crediti sulle foto, chiusura con «Leggi tutto su alea.news»).
+  «Scarica le slide» salva un PNG per slide; «Salva progetto» salva un file .json da riaprire con «Apri progetto».
+  Il lavoro si salva anche da solo nel browser (finché le foto non sono troppe).
+-->
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>àlea · editor caroselli</title>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=block" rel="stylesheet">
+<style>
+  :root { --lime: #d4ff3a; --fondo: #f2f2ef; --pannello: #fff; --testo: #111; --testo2: #66655f; --linea: #ddddd8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fondo); color: var(--testo); font: 14px/1.4 "Noto Sans", system-ui, sans-serif; }
+  header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 16px; background: #000; color: #fff; }
+  header h1 { font: 600 26px "General Sans", sans-serif; letter-spacing: -.05em; margin: 0 14px 0 0; }
+  header .spazio { flex: 1; }
+  button, .bottone { font: inherit; font-weight: 600; border: 1px solid #000; background: #fff; color: #000; padding: 6px 12px; cursor: pointer; border-radius: 0; }
+  button:hover, .bottone:hover { background: var(--lime); }
+  .campo > label.bottone { display: inline-block; font: 600 14px "Noto Sans", sans-serif; letter-spacing: 0; text-transform: none; color: #000; margin: 4px 0 0; }
+  header button, header .bottone { border-color: #fff; }
+  button.primario { background: var(--lime); }
+  main { display: grid; grid-template-columns: 220px 1fr 340px; gap: 0; height: calc(100vh - 52px); }
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; height: auto; } }
+
+  /* colonna delle slide */
+  #elenco { overflow-y: auto; padding: 12px; border-right: 1px solid var(--linea); background: var(--pannello); }
+  .mini { position: relative; margin-bottom: 10px; cursor: pointer; border: 3px solid transparent; }
+  .mini.scelta { border-color: #000; }
+  .mini canvas { display: block; width: 100%; height: auto; }
+  .mini .num { position: absolute; left: 0; top: 0; background: #000; color: #fff; font: 12px "IBM Plex Mono", monospace; padding: 2px 6px; }
+  .aggiungi { display: grid; gap: 6px; margin-top: 12px; }
+  .aggiungi button { text-align: left; }
+
+  /* anteprima */
+  #centro { display: flex; align-items: center; justify-content: center; padding: 20px; overflow: auto; }
+  #tela { width: min(100%, calc((100vh - 100px) * 0.8)); height: auto; box-shadow: 0 0 0 1px var(--linea); background: #fff; }
+
+  /* impostazioni */
+  #prop { overflow-y: auto; padding: 14px 16px 40px; border-left: 1px solid var(--linea); background: var(--pannello); }
+  #prop h2 { font: 600 20px "General Sans", sans-serif; letter-spacing: -.03em; margin: 4px 0 12px; }
+  .campo { margin-bottom: 14px; }
+  .campo > label, .etichetta { display: block; font: 500 11px "IBM Plex Mono", monospace; letter-spacing: .06em; text-transform: uppercase; color: var(--testo2); margin-bottom: 4px; }
+  textarea, input[type=text], input[type=number], select { width: 100%; font: inherit; border: 1px solid #000; border-radius: 0; padding: 6px 8px; background: #fff; }
+  textarea { min-height: 110px; resize: vertical; }
+  input[type=range] { width: 100%; accent-color: #000; }
+  .aiuto { font-size: 12px; color: var(--testo2); margin-top: 4px; }
+  .riga { display: flex; gap: 8px; align-items: center; }
+  .foto-voce { display: grid; grid-template-columns: 54px 1fr auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .foto-voce img { width: 54px; height: 54px; object-fit: cover; filter: grayscale(1); }
+  .foto-voce button { padding: 2px 8px; }
+  .comandi { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 18px; }
+  hr { border: 0; border-top: 1px solid var(--linea); margin: 18px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>àlea · caroselli</h1>
+  <label class="riga" style="gap:6px">fondo
+    <select id="t-fondo" style="width:auto"><option value="bianco">bianco</option><option value="nero">nero</option></select></label>
+  <label class="riga" style="gap:6px">evidenziatore
+    <select id="t-ev" style="width:auto"><option value="lime">lime</option><option value="bianco">bianco</option><option value="nero">nero</option></select></label>
+  <label class="riga" style="gap:6px">nome file
+    <input type="text" id="prefisso" value="n03" style="width:80px"></label>
+  <span class="spazio"></span>
+  <button id="b-nuovo">Nuovo</button>
+  <label class="bottone">Apri progetto<input type="file" id="b-apri" accept=".json" hidden></label>
+  <button id="b-salva">Salva progetto</button>
+  <button id="b-scarica" class="primario">Scarica le slide (PNG)</button>
+</header>
+
+<main>
+  <aside id="elenco">
+    <div id="miniature"></div>
+    <div class="aggiungi">
+      <span class="etichetta">aggiungi una slide</span>
+      <button data-tipo="copertina">+ Copertina</button>
+      <button data-tipo="foto">+ Foto e testo</button>
+      <button data-tipo="testo">+ Testo e ritaglio</button>
+      <button data-tipo="chiusura">+ Chiusura</button>
+    </div>
+  </aside>
+  <section id="centro"><canvas id="tela" width="1080" height="1350"></canvas></section>
+  <aside id="prop"></aside>
+</main>
+
+<script>
+// =============================================================================================
+// 1. STILE: misure e colori (gli stessi di caroselli/temi.js e degli articoli)
+// =============================================================================================
+const W = 1080, H = 1350, M = 56;               // dimensioni della slide e margine laterale
+const FONDI = {
+  bianco: { fondo: "#ffffff", testo: "#111111", testo2: "#5e5d58" },
+  nero:   { fondo: "#0d0d0d", testo: "#f2f2f0", testo2: "#a9a8a2" },
+};
+const EVID = { lime: { ev: "#d4ff3a", su: "#000" }, bianco: { ev: "#ffffff", su: "#000" }, nero: { ev: "#000000", su: "#fff" } };
+const CARATTERI = {
+  titolo: { fam: '"General Sans"', peso: 600, spaziatura: -0.045, interlinea: 1.1 },
+  testo:  { fam: '"Noto Sans"',    peso: 400, spaziatura: 0,      interlinea: 1.5 },
+};
+const INVITO = "Leggi tutto su alea.news";
+
+// =============================================================================================
+// 2. DATI DEL PROGETTO: un elenco di slide. Le foto sono salvate come dataURL (così il progetto è un file solo)
+// =============================================================================================
+// tipi: copertina (testo grande sulle foto), foto (foto + testo), testo (testo + ritaglio su fondo pieno), chiusura
+const NUOVA = {
+  copertina: () => ({ tipo: "copertina", testo: "Una domanda che incuriosisce", stile: "titolo", dim: 104, pos: "alto", bande: "evidenziatore", foto: [], col: 1, fuoco: 25, bn: true }),
+  foto:      () => ({ tipo: "foto", testo: "Una frase dell'articolo, con le ==parole importanti== evidenziate.", stile: "testo", dim: 40, pos: "basso", bande: "evidenziatore", foto: [], col: 1, fuoco: 25, bn: true }),
+  testo:     () => ({ tipo: "testo", testo: "Una frase che spiega il grafico qui sotto.", stile: "testo", dim: 40, pos: "centro", bande: "nessuna", foto: [], ritaglio: null }),
+  chiusura:  () => ({ tipo: "chiusura", testo: "Una frase che invita a leggere l'articolo.", stile: "titolo", dim: 88, pos: "centro", bande: "nessuna", foto: [] }),
+};
+let P = { fondo: "bianco", ev: "lime", prefisso: "n03", slide: [NUOVA.copertina(), NUOVA.foto(), NUOVA.chiusura()] };
+let scelta = 0;
+
+// le immagini già caricate, per non decodificarle a ogni disegno (chiave = dataURL)
+const IMG = new Map();
+function immagine(src) {
+  if (!src) return null;
+  if (!IMG.has(src)) { const i = new Image(); i.onload = disegnaTutto; i.src = src; IMG.set(src, i); }
+  const i = IMG.get(src);
+  return i.complete && i.naturalWidth ? i : null;
+}
+
+// =============================================================================================
+// 3. DISEGNO DI UNA SLIDE su un contesto 2D
+// =============================================================================================
+function font(ctx, stile, dim) {
+  const c = CARATTERI[stile];
+  ctx.font = `${c.peso} ${dim}px ${c.fam}`;
+  ctx.letterSpacing = `${c.spaziatura * dim}px`;
+}
+
+// spezza il testo in righe larghe al massimo maxW. "==parole==" = evidenziate; un a capo = nuovo paragrafo.
+// Restituisce le righe come liste di parole { t, hl, x, w }
+function righe(ctx, testo, maxW) {
+  const out = [];
+  for (const par of testo.split("\n")) {
+    const parole = [];
+    par.split("==").forEach((pezzo, i) => pezzo.split(/\s+/).filter(Boolean).forEach((t) => parole.push({ t, hl: i % 2 === 1 })));
+    let riga = [], x = 0;
+    const spazio = ctx.measureText(" ").width;
+    for (const p of parole) {
+      p.w = ctx.measureText(p.t).width;
+      if (riga.length && x + p.w > maxW) { out.push(riga); riga = []; x = 0; }
+      p.x = x; riga.push(p); x += p.w + spazio;
+    }
+    out.push(riga);
+  }
+  return out;
+}
+
+// foto a tutta pagina: una sola o una griglia di `col` colonne; ognuna col suo credito in basso a destra
+function disegnaFoto(ctx, s, T) {
+  const n = s.foto.length; if (!n) return;
+  const col = Math.min(s.col || 1, n), rig = Math.ceil(n / col), w = W / col, h = H / rig;
+  s.foto.forEach((f, i) => {
+    const x = (i % col) * w, y = Math.floor(i / col) * h, img = immagine(f.src);
+    if (img) {
+      // ritaglio "cover": riempie la cella, e `fuoco` sposta la foto in verticale (0 = alto, 100 = basso)
+      const k = Math.max(w / img.naturalWidth, h / img.naturalHeight), sw = w / k, sh = h / k;
+      const sx = (img.naturalWidth - sw) / 2, sy = (img.naturalHeight - sh) * (s.fuoco ?? 25) / 100;
+      ctx.save(); ctx.filter = s.bn ? "grayscale(1) contrast(1.2)" : "none";
+      ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h); ctx.restore();
+    }
+    if (f.credito) {
+      ctx.font = '13px "IBM Plex Mono"'; ctx.letterSpacing = "0px";
+      const tw = Math.min(ctx.measureText(f.credito).width, w - 16);
+      ctx.fillStyle = T.fondo; ctx.fillRect(x + w - tw - 16, y + h - 22, tw + 16, 22);
+      ctx.fillStyle = T.testo2; ctx.textBaseline = "alphabetic"; ctx.fillText(f.credito, x + w - tw - 8, y + h - 7, w - 16);
+    }
+  });
+}
+
+// blocco di testo: restituisce l'altezza e, se `y` è dato, lo disegna a partire da y
+function bloccoTesto(ctx, s, T, E, y) {
+  const st = s.stile, dim = s.dim, c = CARATTERI[st];
+  font(ctx, st, dim);
+  const rr = righe(ctx, s.testo || "", W - 2 * M - 24), lh = dim * c.interlinea;
+  if (y == null) return rr.length * lh;
+  const padX = dim * 0.15, alto = dim * 0.98, basso = dim * 0.28;   // misure della banda attorno a una riga
+  rr.forEach((riga, i) => {
+    const base = y + i * lh + dim * 0.95;                           // linea di base della riga
+    if (!riga.length) return;
+    const fine = riga.at(-1).x + riga.at(-1).w;
+    const banda = s.bande === "evidenziatore" ? E.ev : s.bande === "fondo" ? T.fondo : null;
+    if (banda) { ctx.fillStyle = banda; ctx.fillRect(M - padX, base - alto, fine + 2 * padX, alto + basso); }
+    // colori: sulla banda dell'evidenziatore il testo è E.su e le parole evidenziate si invertono (fondo E.su, testo E.ev);
+    // altrimenti il testo è quello del tema e le parole evidenziate hanno il fondo dell'evidenziatore
+    const suEv = banda === E.ev;
+    const normale = suEv ? E.su : T.testo, hlFondo = suEv ? E.su : E.ev, hlTesto = suEv ? E.ev : E.su;
+    riga.forEach((p, j) => {
+      if (!p.hl) return;
+      const prima = j > 0 && riga[j - 1].hl, dopo = riga[j + 1]?.hl;   // parole evidenziate vicine: un rettangolo solo
+      const x0 = M + p.x - (prima ? 0 : padX * 0.6), x1 = dopo ? M + riga[j + 1].x : M + p.x + p.w + padX * 0.6;
+      ctx.fillStyle = hlFondo; ctx.fillRect(x0, base - alto, x1 - x0, alto + basso);
+    });
+    riga.forEach((p) => { ctx.fillStyle = p.hl ? hlTesto : normale; ctx.fillText(p.t, M + p.x, base); });
+  });
+  return rr.length * lh;
+}
+
+// ritaglio (schermata di un grafico o di un pezzo di articolo): su un riquadro del colore del fondo
+function bloccoRitaglio(s, T, y, ctx) {
+  const img = immagine(s.ritaglio?.src); if (!img) return 0;
+  const w = W - 2 * M, h = Math.min(img.naturalHeight * w / img.naturalWidth, H - 200);
+  const ww = h < img.naturalHeight * w / img.naturalWidth ? img.naturalWidth * h / img.naturalHeight : w;
+  if (y != null) { ctx.fillStyle = T.fondo; ctx.fillRect(M - 16, y - 16, ww + 32, h + 32); ctx.drawImage(img, M, y, ww, h); }
+  return h;
+}
+
+function disegna(ctx, s) {
+  const T = FONDI[P.fondo], E = EVID[P.ev];
+  ctx.save();
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = T.fondo; ctx.fillRect(0, 0, W, H);
+  if (s.tipo !== "chiusura" && s.tipo !== "testo") disegnaFoto(ctx, s, T);
+
+  // altezza totale del contenuto (testo + eventuale ritaglio + invito della chiusura), per posizionarlo
+  const GAP = 48;
+  const hTesto = s.testo ? bloccoTesto(ctx, s, T, E) : 0;
+  const hRit = s.tipo === "testo" ? bloccoRitaglio(s, T) : 0;
+  const hInv = s.tipo === "chiusura" ? 64 * 1.2 : 0;
+  const tot = hTesto + (hRit ? GAP + hRit : 0) + (hInv ? GAP + hInv : 0);
+  let y = s.pos === "alto" ? 64 : s.pos === "basso" ? H - 76 - tot : (H - tot) / 2;
+
+  if (s.testo) { bloccoTesto(ctx, s, T, E, y); y += hTesto + GAP; }
+  if (hRit) { bloccoRitaglio(s, T, y, ctx); y += hRit + GAP; }
+  if (hInv) {                                           // «Leggi tutto su alea.news», l'unica cosa in lime
+    font(ctx, "titolo", 64);
+    const w = ctx.measureText(INVITO).width;
+    ctx.fillStyle = E.ev; ctx.fillRect(M - 10, y, w + 20, 64 * 1.2);
+    ctx.fillStyle = E.su; ctx.fillText(INVITO, M, y + 64 * 0.95);
+  }
+  ctx.restore();
+}
+
+// =============================================================================================
+// 4. INTERFACCIA
+// =============================================================================================
+const $ = (id) => document.getElementById(id);
+const tela = $("tela"), ctxTela = tela.getContext("2d");
+
+function disegnaTutto() {
+  disegna(ctxTela, P.slide[scelta]);
+  document.querySelectorAll(".mini canvas").forEach((c, i) => {
+    const g = c.getContext("2d"); g.save(); g.scale(c.width / W, c.height / H); disegna(g, P.slide[i]); g.restore();
+  });
+  salvaLocale();
+}
+
+function elenco() {
+  $("miniature").innerHTML = "";
+  P.slide.forEach((s, i) => {
+    const d = document.createElement("div");
+    d.className = "mini" + (i === scelta ? " scelta" : "");
+    d.innerHTML = `<canvas width="216" height="270"></canvas><span class="num">${i + 1} · ${s.tipo}</span>`;
+    d.onclick = () => { scelta = i; aggiorna(); };
+    $("miniature").append(d);
+  });
+}
+
+// pannello delle impostazioni della slide scelta
+function pannello() {
+  const s = P.slide[scelta], p = $("prop");
+  const conFoto = s.tipo === "copertina" || s.tipo === "foto";
+  p.innerHTML = `
+    <h2>Slide ${scelta + 1} · ${s.tipo}</h2>
+    <div class="comandi">
+      <button data-az="su">↑ sposta</button><button data-az="giu">↓ sposta</button>
+      <button data-az="duplica">duplica</button><button data-az="elimina">elimina</button>
+    </div>
+    <div class="campo"><label>Testo</label><textarea id="p-testo">${esc(s.testo)}</textarea>
+      <div class="aiuto">==così== per evidenziare delle parole · a capo per un nuovo paragrafo${s.tipo === "chiusura" ? " · sotto compare «" + INVITO + "»" : ""}</div></div>
+    <div class="campo riga">
+      <div style="flex:1"><label class="etichetta">Carattere</label><select id="p-stile">
+        <option value="titolo">titolo (General Sans)</option><option value="testo">testo (Noto Sans)</option></select></div>
+      <div style="width:90px"><label class="etichetta">Grandezza</label><input type="number" id="p-dim" min="20" max="200" value="${s.dim}"></div>
+    </div>
+    <div class="campo riga">
+      <div style="flex:1"><label class="etichetta">Posizione</label><select id="p-pos">
+        <option value="alto">in alto</option><option value="centro">al centro</option><option value="basso">in basso</option></select></div>
+      <div style="flex:1"><label class="etichetta">Sfondo delle righe</label><select id="p-bande">
+        <option value="evidenziatore">evidenziatore</option><option value="fondo">colore del fondo</option><option value="nessuna">nessuno</option></select></div>
+    </div>
+    ${conFoto ? `<hr>
+    <div class="campo"><label>Foto</label><div id="p-foto"></div>
+      <label class="bottone">+ aggiungi foto<input type="file" id="p-foto-in" accept="image/*" multiple hidden></label>
+      <div class="aiuto">Più foto = griglia. Il credito compare sulla foto, in basso a destra.</div></div>
+    <div class="campo riga">
+      <div style="width:110px"><label class="etichetta">Colonne</label><input type="number" id="p-col" min="1" max="6" value="${s.col || 1}"></div>
+      <label class="riga" style="margin-top:18px"><input type="checkbox" id="p-bn" ${s.bn ? "checked" : ""}> bianco e nero</label>
+    </div>
+    <div class="campo"><label>Inquadratura verticale</label><input type="range" id="p-fuoco" min="0" max="100" value="${s.fuoco ?? 25}">
+      <div class="aiuto">A sinistra mostra la parte alta delle foto (le teste), a destra la parte bassa.</div></div>` : ""}
+    ${s.tipo === "testo" ? `<hr>
+    <div class="campo"><label>Ritaglio</label>
+      ${s.ritaglio ? `<img src="${s.ritaglio.src}" style="width:100%;border:1px solid var(--linea)"><div class="comandi"><button id="p-rit-via">togli</button></div>` : ""}
+      <label class="bottone">${s.ritaglio ? "cambia" : "+ scegli un'immagine"}<input type="file" id="p-rit-in" accept="image/*" hidden></label>
+      <div class="aiuto">Una schermata di un grafico o di un pezzo dell'articolo (es. da telefono, con lo stesso fondo). I bordi vuoti si tagliano da soli.</div></div>` : ""}
+  `;
+  $("p-stile").value = s.stile; $("p-pos").value = s.pos; $("p-bande").value = s.bande;
+  const lega = (id, campo, conv = (v) => v, ev = "input") => $(id)?.addEventListener(ev, (e) => {
+    s[campo] = conv(e.target.type === "checkbox" ? e.target.checked : e.target.value); disegnaTutto();
+  });
+  lega("p-testo", "testo"); lega("p-stile", "stile", String, "change"); lega("p-dim", "dim", Number);
+  lega("p-pos", "pos", String, "change"); lega("p-bande", "bande", String, "change");
+  lega("p-col", "col", Number); lega("p-bn", "bn", Boolean, "change"); lega("p-fuoco", "fuoco", Number);
+
+  p.querySelectorAll("[data-az]").forEach((b) => b.onclick = () => azione(b.dataset.az));
+  if (conFoto) {
+    const box = $("p-foto");
+    s.foto.forEach((f, i) => {
+      const r = document.createElement("div"); r.className = "foto-voce";
+      r.innerHTML = `<img src="${f.src}"><input type="text" placeholder="credito (es. Camera dei deputati, CC BY-SA 4.0)" value="${esc(f.credito || "")}"><button title="togli">×</button>`;
+      r.querySelector("input").oninput = (e) => { f.credito = e.target.value; disegnaTutto(); };
+      r.querySelector("button").onclick = () => { s.foto.splice(i, 1); aggiorna(); };
+      box.append(r);
+    });
+    $("p-foto-in").onchange = async (e) => {
+      for (const file of e.target.files) s.foto.push({ src: await leggi(file), credito: "" });
+      if (s.foto.length > 1 && (s.col || 1) === 1) s.col = Math.min(3, Math.ceil(Math.sqrt(s.foto.length)));
+      aggiorna();
+    };
+  }
+  if (s.tipo === "testo") {
+    $("p-rit-in").onchange = async (e) => { if (e.target.files[0]) { s.ritaglio = { src: await leggi(e.target.files[0], 2000, true) }; aggiorna(); } };
+    if ($("p-rit-via")) $("p-rit-via").onclick = () => { s.ritaglio = null; aggiorna(); };
+  }
+}
+
+function azione(az) {
+  const L = P.slide, i = scelta;
+  if (az === "su" && i > 0) { [L[i - 1], L[i]] = [L[i], L[i - 1]]; scelta--; }
+  if (az === "giu" && i < L.length - 1) { [L[i + 1], L[i]] = [L[i], L[i + 1]]; scelta++; }
+  if (az === "duplica") { L.splice(i + 1, 0, JSON.parse(JSON.stringify(L[i]))); scelta++; }
+  if (az === "elimina" && L.length > 1 && confirm("Eliminare questa slide?")) { L.splice(i, 1); scelta = Math.max(0, i - 1); }
+  aggiorna();
+}
+function aggiorna() { elenco(); pannello(); disegnaTutto(); }
+const esc = (t) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+
+// legge un file immagine e lo rimpicciolisce (lato lungo al massimo `max` px) per non appesantire il progetto
+// rifila = taglia i bordi uniformi (il colore del pixel in alto a sinistra), lasciando 12px di margine: serve ai ritagli
+function leggi(file, max = 1600, rifila = false) {
+  return new Promise((ok) => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      let c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src);
+      if (rifila) c = rifilato(c);
+      ok(c.toDataURL(file.type === "image/png" ? "image/png" : "image/jpeg", 0.9));
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+function rifilato(c) {
+  const px = c.getContext("2d").getImageData(0, 0, c.width, c.height).data, [r0, g0, b0] = px;
+  let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+    const p = (y * c.width + x) * 4;
+    if (Math.abs(px[p] - r0) + Math.abs(px[p + 1] - g0) + Math.abs(px[p + 2] - b0) > 40) {
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+    }
+  }
+  if (x1 < 0) return c;                               // immagine tutta dello stesso colore: la lascio com'è
+  const m = 12; x0 = Math.max(0, x0 - m); y0 = Math.max(0, y0 - m); x1 = Math.min(c.width - 1, x1 + m); y1 = Math.min(c.height - 1, y1 + m);
+  const out = document.createElement("canvas"); out.width = x1 - x0 + 1; out.height = y1 - y0 + 1;
+  out.getContext("2d").drawImage(c, -x0, -y0);
+  return out;
+}
+
+// =============================================================================================
+// 5. SALVATAGGI E ESPORTAZIONE
+// =============================================================================================
+function salvaLocale() { try { localStorage.setItem("alea-editor", JSON.stringify(P)); } catch (e) { /* troppe foto per il browser: resta il file .json */ } }
+function scaricaFile(blob, nome) {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+$("b-salva").onclick = () => scaricaFile(new Blob([JSON.stringify(P)], { type: "application/json" }), `${P.prefisso}-carosello.json`);
+$("b-apri").onchange = async (e) => {
+  try { P = JSON.parse(await e.target.files[0].text()); scelta = 0; sincronizzaTesta(); aggiorna(); }
+  catch (err) { alert("Non riesco a leggere questo file."); }
+};
+$("b-nuovo").onclick = () => { if (confirm("Ricominciare da capo? Il carosello attuale si perde (salvalo prima, se ti serve).")) { P = { fondo: "bianco", ev: "lime", prefisso: P.prefisso, slide: [NUOVA.copertina(), NUOVA.chiusura()] }; scelta = 0; aggiorna(); } };
+// un PNG per slide: <prefisso>-01.png, -02.png, ... (il browser può chiedere il permesso di scaricare più file)
+$("b-scarica").onclick = async () => {
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  for (let i = 0; i < P.slide.length; i++) {
+    disegna(c.getContext("2d"), P.slide[i]);
+    const blob = await new Promise((ok) => c.toBlob(ok, "image/png"));
+    scaricaFile(blob, `${P.prefisso}-${String(i + 1).padStart(2, "0")}.png`);
+    await new Promise((ok) => setTimeout(ok, 300));
+  }
+};
+
+function sincronizzaTesta() { $("t-fondo").value = P.fondo; $("t-ev").value = P.ev; $("prefisso").value = P.prefisso; }
+$("t-fondo").onchange = (e) => { P.fondo = e.target.value; if (P.fondo === "nero" && P.ev === "nero") P.ev = "lime"; sincronizzaTesta(); disegnaTutto(); };
+$("t-ev").onchange = (e) => { P.ev = e.target.value; disegnaTutto(); };
+$("prefisso").oninput = (e) => { P.prefisso = e.target.value.trim() || "carosello"; salvaLocale(); };
+document.querySelectorAll(".aggiungi [data-tipo]").forEach((b) => b.onclick = () => {
+  P.slide.splice(scelta + 1, 0, NUOVA[b.dataset.tipo]()); scelta++; aggiorna();
+});
+
+// avvio: riprende il lavoro salvato nel browser, poi aspetta i caratteri prima di disegnare
+try { const v = JSON.parse(localStorage.getItem("alea-editor")); if (v?.slide?.length) P = v; } catch (e) {}
+sincronizzaTesta(); aggiorna();
+Promise.all(['600 100px "General Sans"', '400 40px "Noto Sans"', '13px "IBM Plex Mono"'].map((f) => document.fonts.load(f).catch(() => {})))
+  .then(disegnaTutto);
+</script>
+</body>
+</html>

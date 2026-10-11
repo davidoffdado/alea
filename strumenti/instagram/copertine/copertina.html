@@ -1,0 +1,39 @@
+<!doctype html>
+<!--
+  COPERTINE DEI CAROSELLI DI ÀLEA (Instagram, 1080×1350): fondo lime, testo nero, nient'altro.
+  Una copertina per numero: ?n=1, ?n=2, ... I testi sono nell'oggetto C qui sotto: per un numero nuovo basta aggiungere una riga.
+  PNG con: sh genera.sh  (scrive copertina-01.png, copertina-02.png, ...)
+  Stessi colori e caratteri del post di presentazione (../presentazione/presentazione.html).
+-->
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>àlea · copertine</title>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@600&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&display=block" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1080px; height: 1350px; overflow: hidden; }
+  body { background: #d4ff3a; color: #000; font-family: "General Sans", sans-serif; }
+  .s { width: 1080px; height: 1350px; padding: 80px; display: flex; flex-direction: column; }
+  .testa { display: flex; justify-content: space-between; font-family: "IBM Plex Mono", monospace; font-size: 28px; letter-spacing: .04em; }
+  .titolo { font-weight: 600; font-size: 150px; line-height: .94; letter-spacing: -.05em; margin-top: 120px; }
+</style>
+</head>
+<body>
+<div class="s" id="s"></div>
+<script>
+// il testo è il gancio, non il titolo dell'articolo: una domanda a cui il carosello risponde.
+// A 150px ci stanno circa 60 caratteri (6 righe): oltre, il testo esce dalla pagina
+const C = {
+  1: "Nella politica italiana si litiga anche tra alleati",
+  2: "Non siamo bravi a simulare il caso",
+};
+const n = Number(new URLSearchParams(location.search).get("n")) || 1;
+Promise.all([document.fonts.load('600 150px "General Sans"'), document.fonts.load('28px "IBM Plex Mono"')]).then(() => {
+  document.getElementById("s").innerHTML =
+    `<div class="testa"><span>àlea</span><span>n. ${String(n).padStart(2, "0")}</span></div><div class="titolo">${C[n]}</div>`;
+});
+</script>
+</body>
+</html>

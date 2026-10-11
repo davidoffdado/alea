@@ -1,0 +1,5 @@
+Caroselli da pubblicare su Instagram (tema bianco + lime, 2026-10-11). Come rigenerarli: ../COME-SI-FA.md
+n01-litigi: 01 = copertina (caroselli/carosello.html?a=litigi&tema=bianco-lime&s=1),
+            02-07 = timeline e classifica (discorsi_camera/applausi/carosello/png/b4_alea).
+n02-moneta: 01-07 = caroselli/carosello.html?a=moneta&tema=bianco-lime&s=1..7 (07 = chiusura).
+I crediti delle foto sono scritti sulle foto.

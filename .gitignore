@@ -7,3 +7,13 @@ dist/
 scripts/copertine/prove/*
 !scripts/copertine/prove/scatta.html
 !scripts/copertine/prove/server.mjs
+# immagini rigenerabili con gli script (sh genera.sh, node ritagli/scatta.mjs): non serve salvarle
+strumenti/instagram/caroselli/png/
+strumenti/instagram/caroselli/v*/png/
+strumenti/instagram/caroselli/confronto-*.png
+strumenti/instagram/caroselli/v*/confronto-*.png
+strumenti/instagram/caroselli/ritagli/pagine/
+strumenti/instagram/caroselli/ritagli/nero-*/
+strumenti/instagram/caroselli/ritagli/bianco-*/
+strumenti/instagram/caroselli/ritagli/grigio-*/
+strumenti/instagram/siti/temi-*.png

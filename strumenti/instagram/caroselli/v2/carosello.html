@@ -1,0 +1,231 @@
+<!doctype html>
+<!--
+  CAROSELLI DI ÀLEA, BOZZE v2 (Instagram, 1080×1350): un solo fondo lime, solo foto e ritagli dell'articolo.
+  Testo scritto solo nella copertina (la domanda-gancio) e l'indirizzo nell'ultima slide.
+  I ritagli sono "stampati" sul lime (mix-blend-mode: multiply): il bianco della pagina diventa lime, il nero resta nero,
+  così non ci sono riquadri bianchi sopra il fondo. Niente rotazioni, niente ombre.
+  Uso: carosello.html?a=litigi&v=D&s=1
+    a = articolo (litigi, moneta)   v = variante (D stampa, E blocchi, F manifesto)   s = numero della slide
+  PNG con: sh genera.sh   (scrive png/<articolo>-<variante>-<slide>.png e confronto-<articolo>.png)
+  La prima versione (collage, rivista, schermo) è in v1/.
+-->
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>àlea · caroselli v2</title>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@600&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=block" rel="stylesheet">
+<style>
+  :root { --lime: #d4ff3a; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1080px; height: 1350px; overflow: hidden; }
+  body { background: var(--lime); color: #000; font-family: "General Sans", sans-serif; }
+  .s { position: relative; width: 1080px; height: 1350px; overflow: hidden; }
+  .testa { position: absolute; left: 64px; right: 64px; top: 52px; z-index: 5; display: flex; justify-content: space-between; font: 26px "IBM Plex Mono", monospace; letter-spacing: .04em; }
+
+  /* ritaglio stampato sul lime: contrast + brightness portano a bianco pieno anche la carta avorio della moneta,
+     poi multiply lo fa sparire nel lime */
+  .rit { position: absolute; background-repeat: no-repeat; filter: contrast(1.25) brightness(1.08); mix-blend-mode: multiply; }
+  /* foto: bianco e nero; .stampa = anche lei sul lime (i bianchi diventano lime) */
+  .foto { position: absolute; background-size: cover; background-position: center 25%; filter: grayscale(1) contrast(1.3); }
+  .foto.stampa { mix-blend-mode: multiply; filter: grayscale(1) contrast(1.35) brightness(1.1); }
+  /* EVIDENZIATORE (?ev=bianco|grigio|nero): una banda dietro ogni riga del ritaglio, trovata leggendo i pixel.
+     Bianco e grigio: il ritaglio resta in multiply (il bianco della pagina prende il colore della banda).
+     Nero: il ritaglio si inverte (testo bianco) e va in screen, così sul nero resta bianco e fuori banda resta lime;
+     hue-rotate(180deg) dopo invert riporta i colori dei grafici (rosso, arancione) quasi a quelli originali */
+  .banda { position: absolute; }
+  .ev-bianco .banda { background: #fff; }
+  .ev-grigio .banda { background: #cfcfcb; }
+  .ev-nero .banda { background: #000; }
+  .ev-nero .rit { filter: contrast(1.25) brightness(1.08) invert(1) hue-rotate(180deg); mix-blend-mode: screen; }
+  .filo { position: absolute; background: #000; }
+  .gancio { position: absolute; left: 64px; right: 64px; font-weight: 600; font-size: 116px; line-height: .95; letter-spacing: -.05em; }
+  .link { position: absolute; font: 500 30px "IBM Plex Mono", monospace; background: #000; color: var(--lime); padding: 10px 18px; z-index: 6; }
+  .credito { position: absolute; left: 64px; bottom: 30px; font: 15px "IBM Plex Mono", monospace; z-index: 6; background: var(--lime); padding: 2px 6px; margin-left: -6px; }
+</style>
+</head>
+<body>
+<div class="s" id="s"></div>
+<script>
+// ---------------------------------------------------------------------------------------------
+// RITAGLI: pezzi di schermata dell'articolo visto da telefono. src = file in ../ritagli/, larg = larghezza della
+// schermata in px CSS del telefono; x/y/w/h = rettangolo da ritagliare (px CSS). Il testo dell'articolo parte
+// a 16px dal bordo sinistro: lo usiamo per allineare il testo dei ritagli al margine della slide.
+// ---------------------------------------------------------------------------------------------
+const R = {
+  l_intro:        { src: "litigi-390.png",   larg: 500, x: 0, y: 795, w: 390, h: 375 },
+  l_bossi:        { src: "litigi-7596.png",  larg: 500, x: 0, y: 308, w: 390, h: 200 },
+  l_bossi_dopo:   { src: "litigi-8440.png",  larg: 500, x: 0, y: 495, w: 390, h: 170 },
+  l_bossi_tl:     { src: "litigi-8440.png",  larg: 500, x: 0, y: 208, w: 390, h: 90 },
+  l_ce:           { src: "litigi-9284.png",  larg: 500, x: 0, y: 262, w: 390, h: 455 },
+  l_draghi_emi:   { src: "litigi-12660.png", larg: 500, x: 0, y: 0,   w: 390, h: 205 },
+  l_draghi_tl:    { src: "litigi-12660.png", larg: 500, x: 0, y: 310, w: 390, h: 150 },
+  l_draghi_testo: { src: "litigi-12660.png", larg: 500, x: 0, y: 548, w: 390, h: 222 },
+  m_gioco:        { src: "moneta-gioco-390.png", larg: 500, x: 0, y: 145, w: 390, h: 520 },
+  m_rand:         { src: "moneta-390.png", larg: 500, x: 0, y: 978, w: 390, h: 525 },
+  m_serie:        { src: "moneta-390.png", larg: 500, x: 0, y: 3250, w: 390, h: 560 },
+  m_cambi:        { src: "moneta-390.png", larg: 500, x: 0, y: 3842, w: 390, h: 482 },
+  m_oracolo:      { src: "moneta-390.png", larg: 500, x: 0, y: 4360, w: 390, h: 578 },
+  m_tabella:      { src: "moneta-390.png", larg: 500, x: 0, y: 2890, w: 390, h: 262 },
+};
+
+// ---------------------------------------------------------------------------------------------
+// CONTENUTI: ogni slide è solo foto + ritagli. gancio = testo della copertina, url = indirizzo nell'ultima.
+// ---------------------------------------------------------------------------------------------
+const ARTICOLI = {
+  litigi: { n: 1, url: "alea.news/litigi-tra-alleati", slide: [
+    { gancio: "Nella politica italiana si litiga anche tra alleati", foto: ["umberto_bossi.jpg", "silvio_berlusconi.jpg"], rit: [],
+      cred: "Foto: Parlamento europeo; La Moncloa (Wikimedia Commons)" },
+    { foto: [], rit: ["l_intro"] },
+    { foto: ["umberto_bossi.jpg"], rit: ["l_bossi", "l_bossi_dopo"], cred: "Foto: Umberto Bossi, Parlamento europeo (Wikimedia Commons)" },
+    { foto: ["alessandro_cè.jpg"], rit: ["l_ce"], cred: "Foto: Alessandro Cè, Camera dei deputati, CC BY-SA 4.0" },
+    { foto: ["mario_draghi.jpg", "matteo_salvini.jpg"], rit: ["l_draghi_testo"], cred: "Foto: Parlamento europeo, CC BY 2.0; Unione europea" },
+    { foto: [], rit: ["l_draghi_emi", "l_draghi_tl"], url: true },
+  ] },
+  moneta: { n: 2, url: "alea.news/prova-a-fare-il-caso", slide: [
+    { gancio: "Non siamo bravi a simulare il caso", foto: ["eniac-operatrici.jpg"], rit: [], cred: "Foto: ENIAC, esercito USA, pubblico dominio" },
+    { foto: [], rit: ["m_gioco"] },
+    { foto: ["ibm-nasa.jpg"], rit: ["m_rand"], cred: "Foto: IBM 704 alla NASA, pubblico dominio" },
+    { foto: [], rit: ["m_serie"] },
+    { foto: [], rit: ["m_cambi"] },
+    { foto: [], rit: ["m_oracolo"], url: true },
+  ] },
+};
+
+// ---------------------------------------------------------------------------------------------
+// disegno
+// ---------------------------------------------------------------------------------------------
+// ritaglio con il testo allineato a sinistra a `margine` e largo k volte l'originale, in alto a `y`;
+// hMax taglia il ritaglio se è più alto dello spazio
+function rit(nome, k, y, margine = 64, hMax = Infinity) {
+  const r = R[nome], h = Math.min(r.h * k, hMax);
+  return { html: `<div class="rit" data-nome="${nome}" data-k="${k}" data-hmax="${h}" style="left:${margine - 16 * k}px;top:${y}px;width:${r.w * k}px;height:${h}px;
+    background-image:url(../ritagli/${r.src});background-size:${r.larg * k}px auto;background-position:${-r.x * k}px ${-r.y * k}px"></div>`, h };
+}
+// scala che fa stare una pila di ritagli (con `gap` tra uno e l'altro) in larghezza `w` e altezza `hMax`
+function scala(nomi, w, hMax, gap) {
+  const somma = nomi.reduce((t, n) => t + R[n].h, 0);
+  return Math.min(w / (390 - 32), (hMax - gap * (nomi.length - 1)) / somma);
+}
+const foto = (f, x, y, w, h, cls = "") =>
+  `<div class="foto ${cls}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;background-image:url('../foto/${f}')"></div>`;
+const filo = (x, y, w, h) => `<div class="filo" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"></div>`;
+
+const V = {
+  // D · STAMPA: tutto stampato sul lime, foto comprese; tanto spazio vuoto, nessuna linea
+  D(d) {
+    let h = "", y = 140;
+    if (d.gancio) {
+      const n = d.foto.length, w = n > 1 ? 470 : 952;
+      d.foto.forEach((f, i) => h += foto(f, 64 + i * (w + 12), 640, w, 640, "stampa"));
+      return h + `<div class="gancio" style="top:150px">${d.gancio}</div>`;
+    }
+    if (d.foto.length) {
+      const n = d.foto.length, w = (952 - (n - 1) * 12) / n, hf = d.rit.length > 1 ? 400 : 470;
+      d.foto.forEach((f, i) => h += foto(f, 64 + i * (w + 12), y, w, hf, "stampa"));
+      y += hf + 48;
+    }
+    const k = scala(d.rit, 952, 1350 - y - (d.url ? 150 : 80), 36);
+    d.rit.forEach((n) => { const r = rit(n, k, y); h += r.html; y += r.h + 36; });
+    if (d.url) h += `<div class="link" style="left:64px;bottom:64px">${A.url}</div>`;
+    return h;
+  },
+
+  // E · BLOCCHI: griglia da giornale con fili neri spessi; foto vere in bianco e nero a filo dei bordi
+  E(d) {
+    const F = 8;                                   // spessore dei fili
+    let h = filo(0, 120, 1080, F), y = 120 + F;
+    if (d.gancio) {
+      h += filo(0, 700, 1080, F);
+      const n = d.foto.length;
+      d.foto.forEach((f, i) => { h += foto(f, i * 540 + (i ? F / 2 : 0), 700 + F, n > 1 ? 540 - F / 2 : 1080, 650 - F); if (i) h += filo(540 - F / 2, 700, F, 650); });
+      return h + `<div class="gancio" style="top:180px;font-size:108px">${d.gancio}</div>`;
+    }
+    if (d.foto.length) {
+      const n = d.foto.length, hf = 420;
+      d.foto.forEach((f, i) => { h += foto(f, i * (1080 / n) + (i ? F / 2 : 0), y, 1080 / n - (n > 1 ? F / 2 : 0), hf); if (i) h += filo(1080 / n - F / 2, y, F, hf); });
+      y += hf; h += filo(0, y, 1080, F); y += F;
+    }
+    y += 44;
+    const k = scala(d.rit, 952, 1350 - y - (d.url ? 170 : 90) - (d.rit.length - 1) * (F + 88), 0);
+    d.rit.forEach((n, i) => {
+      if (i) { y += 44; h += filo(0, y, 1080, F); y += F + 44; }
+      const r = rit(n, k, y); h += r.html; y += r.h;
+    });
+    if (d.url) { h += filo(0, 1350 - 120, 1080, F); h += `<div class="link" style="left:64px;bottom:34px">${A.url}</div>`; }
+    return h;
+  },
+
+  // F · MANIFESTO: un ritaglio enorme che esce dai bordi, la foto a tutta larghezza nella metà bassa
+  F(d) {
+    let h = "";
+    if (d.gancio) {
+      const n = d.foto.length;
+      d.foto.forEach((f, i) => h += foto(f, i * 1080 / n, 620, 1080 / n, 730, "stampa"));
+      return h + `<div class="gancio" style="top:150px;font-size:124px">${d.gancio}</div>`;
+    }
+    const conFoto = d.foto.length > 0, fondo = conFoto ? 760 : 1350;
+    if (conFoto) d.foto.forEach((f, i, a) => h += foto(f, i * 1080 / a.length, fondo, 1080 / a.length, 1350 - fondo, "stampa"));
+    // un solo ritaglio, grande: il primo (gli altri si tralasciano)
+    const k = 1000 / (390 - 32);
+    h += rit(d.rit[0], k, 130, 48, fondo - 130 - (d.url ? 110 : 0)).html;
+    if (d.url) h += `<div class="link" style="left:48px;top:${fondo - 100}px">${A.url}</div>`;
+    return h;
+  },
+};
+
+const q = new URLSearchParams(location.search);
+// ---------------------------------------------------------------------------------------------
+// EVIDENZIATORE: per ogni ritaglio legge i pixel della schermata, trova le righe che contengono
+// inchiostro (testo, grafici) e mette dietro a ciascuna una banda larga quanto la riga.
+// ---------------------------------------------------------------------------------------------
+const ev = q.get("ev");
+function evidenzia() {
+  document.body.classList.add("ev-" + ev);
+  document.querySelectorAll(".rit").forEach((el) => {
+    const r = R[el.dataset.nome], k = +el.dataset.k, img = new Image();
+    img.onload = () => {
+      const f = img.naturalWidth / r.larg;                    // pixel dell'immagine per px CSS del telefono
+      const W = Math.round(r.w * f), H = Math.round(Math.min(r.h, el.dataset.hmax / k) * f);
+      const c = document.createElement("canvas"); c.width = W; c.height = H;
+      const g = c.getContext("2d"); g.drawImage(img, -r.x * f, -r.y * f);
+      const px = g.getImageData(0, 0, W, H).data;
+      // inchiostro = pixel scuro (luminosità < 160) o molto colorato (barre rosse, fumetti arancioni)
+      const righe = [];
+      for (let y = 0; y < H; y++) {
+        let min = W, max = -1;
+        for (let x = 0; x < W; x++) {
+          const p = (y * W + x) * 4, R_ = px[p], G = px[p + 1], B = px[p + 2];
+          const lum = .3 * R_ + .59 * G + .11 * B, sat = Math.max(R_, G, B) - Math.min(R_, G, B);
+          if (lum < 160 || sat > 90) { if (x < min) min = x; max = x; }
+        }
+        righe.push(max >= 0 ? [min, max] : null);
+      }
+      // righe consecutive con inchiostro (staccate da meno di 3px CSS) = una riga di testo o un grafico
+      const bande = []; let cur = null, vuote = 0;
+      righe.forEach((rg, y) => {
+        if (rg) {
+          if (cur && vuote <= 3 * f) { cur.y1 = y; cur.x0 = Math.min(cur.x0, rg[0]); cur.x1 = Math.max(cur.x1, rg[1]); }
+          else { cur = { y0: y, y1: y, x0: rg[0], x1: rg[1] }; bande.push(cur); }
+          vuote = 0;
+        } else vuote++;
+      });
+      const L = parseFloat(el.style.left), T = parseFloat(el.style.top), padX = 12, padY = 7;
+      const html = bande.filter((b) => b.y1 - b.y0 > 2 * f).map((b) =>
+        `<div class="banda" style="left:${L + b.x0 / f * k - padX}px;top:${T + b.y0 / f * k - padY}px;
+          width:${(b.x1 - b.x0) / f * k + 2 * padX}px;height:${(b.y1 - b.y0) / f * k + 2 * padY}px"></div>`).join("");
+      el.insertAdjacentHTML("beforebegin", html);
+    };
+    img.src = "../ritagli/" + r.src;
+  });
+}
+const A = ARTICOLI[q.get("a") || "litigi"], v = q.get("v") || "D", i = (+q.get("s") || 1) - 1, d = A.slide[i];
+Promise.all(['600 100px "General Sans"', '26px "IBM Plex Mono"'].map((f) => document.fonts.load(f))).then(() => {
+  document.getElementById("s").innerHTML =
+    `<div class="testa"><span>àlea</span><span>n. ${String(A.n).padStart(2, "0")} · ${i + 1}/${A.slide.length}</span></div>` +
+    V[v](d) + (d.cred ? `<div class="credito">${d.cred}</div>` : "");
+  if (ev) evidenzia();
+});
+</script>
+</body>
+</html>

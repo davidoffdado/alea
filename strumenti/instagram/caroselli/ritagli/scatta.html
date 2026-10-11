@@ -1,0 +1,32 @@
+<!doctype html>
+<!-- Fotografa UN pezzo di articolo come lo vedrebbe un telefono largo 390px.
+     ?p=pagina &sel=selettore [&testo=...] [&fino=selettore] [&nascondi=selettore] [&frase=inizio|fine] &fondo=colore
+     La pagina sta in un iframe alto 1000px (come un telefono grande): si scorre fino al pezzo, si aspetta che
+     i grafici si disegnino, poi un riquadro mostra solo il pezzo (da sel a fino) a 10px dal bordo alto;
+     tutto il resto della finestra è del colore del fondo. nascondi = elementi da togliere (es. l'emiciclo fisso). -->
+<style>html,body{margin:0;overflow:hidden}#r{position:relative;width:390px;height:1000px;overflow:hidden}iframe{position:absolute;left:0;top:0;width:390px;height:1000px;border:0}</style>
+<div id="r"><iframe id="f" scrolling="no"></iframe></div>
+<script>
+const q = new URLSearchParams(location.search), f = document.getElementById("f"), r = document.getElementById("r");
+document.body.style.background = q.get("fondo") || "#fff";
+f.src = q.get("p");
+f.onload = () => setTimeout(() => {
+  const d = f.contentDocument, w = f.contentWindow, testo = q.get("testo");
+  if (q.get("nascondi")) d.head.insertAdjacentHTML("beforeend", `<style>${q.get("nascondi")}{visibility:hidden!important}</style>`);
+  const a = [...d.querySelectorAll(q.get("sel"))].find((e) => !testo || e.textContent.includes(testo));
+  if (!a) { document.body.innerHTML = "<p>non trovato</p>"; return; }
+  // frase = "inizio|fine": nel paragrafo resta solo il testo da inizio a fine (compresi), con i suoi evidenziati
+  if (q.get("frase")) {
+    const [ini, fin] = q.get("frase").split("|"), h = a.innerHTML, i = h.indexOf(ini), j = h.indexOf(fin, i);
+    if (i >= 0 && j >= 0) a.innerHTML = h.slice(i, j + fin.length);
+  }
+  const b = q.get("fino") ? d.querySelector(q.get("fino")) : a;
+  w.scrollTo(0, a.getBoundingClientRect().top + w.scrollY - 10);
+  w.dispatchEvent(new Event("scroll"));
+  setTimeout(() => {
+    const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+    f.style.top = (10 - ra.top) + "px";
+    r.style.height = Math.min(990, rb.bottom - ra.top + 20) + "px";
+  }, 2500);
+}, 2500);
+</script>

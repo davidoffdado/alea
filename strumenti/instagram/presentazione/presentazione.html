@@ -1,0 +1,60 @@
+<!doctype html>
+<!--
+  POST DI PRESENTAZIONE DI ÀLEA (Instagram, 1080×1350). Ogni slide è ?s=1 ... ?s=4. PNG con: sh genera.sh
+  Stesso fondo lime del sito, General Sans come il logo. Testi presi dall'about del sito (Desktop/alea/src/config.js).
+-->
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>àlea · presentazione</title>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=block" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1080px; height: 1350px; overflow: hidden; }
+  body { background: #d4ff3a; color: #000; font-family: "General Sans", sans-serif; }
+  .s { position: relative; width: 1080px; height: 1350px; padding: 80px; display: flex; flex-direction: column; }
+  .mono { font-family: "IBM Plex Mono", monospace; font-size: 28px; letter-spacing: .04em; }   /* niente maiuscolo: àlea si scrive minuscolo */
+  .testa { display: flex; justify-content: space-between; }
+  .grande { font-weight: 600; font-size: 96px; line-height: .98; letter-spacing: -.045em; }
+  p { font-size: 44px; line-height: 1.25; margin-top: 36px; max-width: 22ch; }
+  .giu { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; }
+  .logo { font-weight: 700; font-size: 120px; letter-spacing: -.075em; line-height: .8; }
+  .art { border-top: 3px solid #000; padding: 26px 0 30px; display: grid; grid-template-columns: 130px 1fr; gap: 20px; align-items: baseline; }
+  .art .n { font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 34px; }
+  .art .t { font-weight: 600; font-size: 54px; line-height: 1.02; letter-spacing: -.035em; }
+</style>
+</head>
+<body>
+<div class="s" id="s"></div>
+<script>
+const S = {
+  // la "à" del logo, enorme e da sola. translateX(-30px): la spaziatura stretta del logo la spostava a destra (misurato sul png)
+  1: `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+        <span style="font-weight:700;font-size:1150px;letter-spacing:-.075em;line-height:.8;margin-top:-60px;transform:translateX(-30px)">à</span>
+      </div>
+      <div class="giu" style="position:relative"><span class="mono">alea.news</span></div>`,
+
+  2: `<div class="testa mono"><span>àlea</span><span>2/4</span></div>
+      <div class="grande" style="margin-top:120px">Storie raccontate con i dati.</div>
+      <p>àlea è un progetto di data e visual journalism su cultura, società, politica, scienza e molto altro. Grafici, giochi e articoli da leggere anche da telefono.</p>
+      <div class="giu"><span class="mono">di David Ruffini</span><span class="mono">→</span></div>`,
+
+  3: `<div class="testa mono"><span>àlea</span><span>3/4</span></div>
+      <div class="grande" style="margin-top:120px">Perché àlea?</div>
+      <p>In latino <i>alea</i> è il gioco dei dadi, e quindi il rischio, il caso. Quello che i dati aiutano a distinguere da ciò che caso non è.</p>
+      <div class="giu"><span class="mono">«alea iacta est»</span><span class="mono">→</span></div>`,
+
+  4: `<div class="testa mono"><span>àlea</span><span>4/4</span></div>
+      <div class="grande" style="margin-top:120px;margin-bottom:56px">Da dove iniziare</div>
+      <div class="art"><span class="n">n. 01</span><span class="t">I litigi tra gli alleati di governo</span></div>
+      <div class="art" style="border-bottom:3px solid #000"><span class="n">n. 02</span><span class="t">Non siamo bravi a simulare la casualità</span></div>
+      <div class="giu"><span class="logo">àlea</span><span class="mono" style="font-weight:600">alea.news · link in bio</span></div>`,
+};
+const n = Number(new URLSearchParams(location.search).get("s")) || 1;
+Promise.all([document.fonts.load('700 120px "General Sans"'), document.fonts.load('600 96px "General Sans"'), document.fonts.load('400 44px "General Sans"'),
+             document.fonts.load('600 28px "IBM Plex Mono"'), document.fonts.load('28px "IBM Plex Mono"')])
+  .then(() => (document.getElementById("s").innerHTML = S[n]));
+</script>
+</body>
+</html>

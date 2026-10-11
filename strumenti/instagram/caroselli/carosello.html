@@ -1,0 +1,209 @@
+<!doctype html>
+<!--
+  CAROSELLI DI ÀLEA, BOZZE v4 (Instagram, 1080×1350).
+  Foto a tutta pagina (una o una griglia di più foto, ognuna con il suo credito), ritagli dell'articolo sopra: ogni riga di testo ha il suo
+  sfondo (evidenziatore), grafici e fumetti un riquadro del colore del fondo. Nessuna scritta su àlea o sul numero, tranne l'invito «Leggi tutto su alea.news» nella chiusura.
+  Uso: carosello.html?a=litigi&tema=nero-lime&s=1     temi: nero-lime, nero-bianco, bianco-lime, bianco-nero
+  I ritagli si fotografano con node ritagli/scatta.mjs (elenco in ritagli/elenco.js, una cartella per tema).
+  PNG con: sh genera.sh   (scrive png/<articolo>-<tema>-<slide>.png e i fogli di confronto)
+  Versioni precedenti: v1/ v2/ v3/.
+-->
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>àlea · caroselli v4</title>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@600&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=block" rel="stylesheet">
+<script src="temi.js"></script>
+<script src="ritagli/elenco.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1080px; height: 1350px; overflow: hidden; }
+  body { background: var(--fondo); color: var(--testo); font-family: "General Sans", sans-serif; }
+  .s { position: relative; width: 1080px; height: 1350px; overflow: hidden; }
+  .foto { position: absolute; background-size: cover; background-position: center 22%; filter: grayscale(1) contrast(1.2); }
+  /* i ritagli: l'immagine intera resta invisibile, si vedono solo i pezzi (bande e riquadri) */
+  .rit { position: absolute; visibility: hidden; }
+  .pezzo { position: absolute; overflow: hidden; isolation: isolate; }
+  .pezzo.riga { background: var(--ev); }
+  .pezzo.blocco { background: var(--fondo); }
+  .copia { position: absolute; background-repeat: no-repeat; }
+  /* nelle bande il ritaglio si fonde con il colore dell'evidenziatore:
+     .scuro (evidenziatore chiaro) = testo scuro in multiply; .chiaro (evidenziatore nero) = testo chiaro in screen;
+     .inv = la schermata va prima invertita (hue-rotate riporta i colori quasi agli originali) */
+  .riga .copia.scuro { mix-blend-mode: multiply; filter: contrast(1.3) brightness(1.08); }
+  .riga .copia.scuro.inv { filter: invert(1) hue-rotate(180deg) contrast(1.3) brightness(1.08); }
+  .riga .copia.chiaro { mix-blend-mode: screen; filter: contrast(1.3); }
+  .riga .copia.chiaro.inv { filter: invert(1) hue-rotate(180deg) contrast(1.3); }
+  .gancio { position: absolute; left: 56px; right: 56px; font-weight: 600; font-size: 108px; line-height: 1.1; letter-spacing: -.045em; }
+  .gancio span { background: var(--ev); color: var(--su); padding: 0 .12em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  /* credito di ogni foto, nell'angolo in basso a destra della foto stessa */
+  .credito { position: absolute; right: 0; bottom: 0; font: 13px/1.3 "IBM Plex Mono", monospace; background: var(--fondo); color: var(--testo2); padding: 4px 8px; }
+  /* chiusura: fondo pieno, una frase e l'invito evidenziato */
+  .chiusura { position: absolute; left: 56px; right: 56px; top: 50%; transform: translateY(-50%); font-weight: 600; letter-spacing: -.045em; }
+  .chiusura p { font-size: 92px; line-height: 1.05; }
+  .chiusura .invito { display: inline-block; margin-top: 56px; font-size: 64px; background: var(--ev); color: var(--su); padding: 0 .15em; }
+</style>
+</head>
+<body>
+<div class="s" id="s"></div>
+<script>
+// ogni ritaglio è un file a sé (ritagli/<tema>/<nome>.png, 390×1000 px CSS a densità 2, il pezzo parte in alto)
+const R = {};
+for (const [nome, e] of Object.entries(ELENCO)) R[nome] = { src: nome + ".png", larg: 500, x: 0, w: 390, y: 0, h: 1000, righe: e.righe || [0, 999], blocco: e.blocco };
+
+// ---------------------------------------------------------------------------------------------
+// CONTENUTI: foto (una = a tutta pagina, più = griglia di `col` colonne), ritagli, gancio (solo copertina).
+// ---------------------------------------------------------------------------------------------
+// crediti delle foto (da discorsi_camera/applausi/tabelle/foto.csv e Wikimedia Commons), scritti su ogni foto
+const CREDITI = {
+  "umberto_bossi.jpg": "Parlamento europeo",
+  "silvio_berlusconi.jpg": "La Moncloa, pubblico dominio",
+  "matteo_salvini.jpg": "Consiglio dell'UE",
+  "mario_draghi.jpg": "Parlamento europeo, CC BY 2.0",
+  "renato_brunetta.jpg": "Camera dei deputati, CC BY-SA 4.0",
+  "enrico_letta.jpg": "C. Licoppe/Commissione europea, CC BY 4.0",
+  "alessandro_cè.jpg": "Camera dei deputati, CC BY-SA 4.0",
+  "gianfranco_fini.jpg": "Regola21, CC BY-SA 4.0",
+  "giuseppe_conte.jpg": "Quirinale",
+  "pier_ferdinando_casini.jpg": "F. Pierantoni, CC BY 2.0",
+  "marco_pannella.jpg": "Parlamento europeo",
+  "loris_fortuna.jpg": "Camera dei deputati, CC BY-SA 4.0",
+  "eniac-operatrici.jpg": "esercito USA, pubblico dominio",
+  "eniac-beck-snyder.jpg": "esercito USA, pubblico dominio",
+  "ibm-nasa.jpg": "NASA, pubblico dominio",
+};
+const POLITICI = ["silvio_berlusconi", "umberto_bossi", "matteo_salvini", "mario_draghi", "renato_brunetta", "enrico_letta",
+  "alessandro_cè", "gianfranco_fini", "giuseppe_conte", "pier_ferdinando_casini", "marco_pannella", "loris_fortuna"].map((n) => n + ".jpg");
+const ARTICOLI = {
+  litigi: { slide: [
+    { gancio: "Nella politica italiana si litiga anche tra alleati", foto: POLITICI, col: 3 },
+    { foto: ["silvio_berlusconi.jpg", "umberto_bossi.jpg", "gianfranco_fini.jpg", "pier_ferdinando_casini.jpg"], col: 2, rit: ["l_titolo", "l_1047"] },
+    { foto: ["umberto_bossi.jpg"], rit: ["l_bossi_tit", "l_bossi_frase", "l_bossi_dopo"] },
+    { foto: ["alessandro_cè.jpg", "silvio_berlusconi.jpg"], col: 2, rit: ["l_ce_tit", "l_ce_dialogo"] },
+    { foto: ["mario_draghi.jpg", "matteo_salvini.jpg", "enrico_letta.jpg", "giuseppe_conte.jpg"], col: 2, rit: ["l_draghi_testo"] },
+    { rit: ["l_draghi_emi", "l_draghi_tl"] },
+  ] },
+  moneta: { slide: [
+    { gancio: "Non siamo bravi a simulare il caso", foto: ["eniac-operatrici.jpg"] },
+    { foto: ["eniac-beck-snyder.jpg"], rit: ["m_gioco"] },
+    { foto: ["ibm-nasa.jpg"], rit: ["m_rand"] },
+    { rit: ["m_serie_t", "m_serie_g"] },
+    { rit: ["m_cambi_t", "m_cambi_g"] },
+    { rit: ["m_oracolo_t", "m_oracolo_g"] },
+    { chiusura: "Inventa cento lanci di moneta e scopri se un programma riesce a prevederli." },
+  ] },
+};
+
+// ---------------------------------------------------------------------------------------------
+// tema
+// ---------------------------------------------------------------------------------------------
+const q = new URLSearchParams(location.search);
+const [fondo, evNome] = (q.get("tema") || "nero-lime").split("-");
+const F = FONDI[fondo], E = evid(fondo, evNome);
+const root = document.documentElement.style;
+root.setProperty("--fondo", F.fondo); root.setProperty("--testo", F.testo); root.setProperty("--testo2", F.testo2);
+root.setProperty("--ev", E.ev); root.setProperty("--su", E.su);
+const tono = E.su === "#000" ? "scuro" : "chiaro";
+const inverti = (tono === "scuro") === (fondo === "nero");
+const cartella = `ritagli/${fondo}-${evNome}/`;
+
+// ---------------------------------------------------------------------------------------------
+// disegno
+// ---------------------------------------------------------------------------------------------
+// foto a tutta pagina: una sola, oppure una griglia senza spazi
+function fotoPagina(d) {
+  const n = d.foto.length, col = d.col || 1, righe = Math.ceil(n / col), w = 1080 / col, h = 1350 / righe;
+  return d.foto.map((f, i) => `<div class="foto" style="left:${(i % col) * w}px;top:${Math.floor(i / col) * h}px;
+    width:${w}px;height:${h}px;background-image:url('foto/${f}')"></div>
+    <div class="credito" style="left:auto;right:${1080 - ((i % col) + 1) * w}px;top:${(Math.floor(i / col) + 1) * h}px;bottom:auto;transform:translateY(-100%);max-width:${w}px">${CREDITI[f] || ""}</div>`).join("");
+}
+function rit(nome, k, y, x = 56) {
+  const r = R[nome], h = r.h * k;
+  return { html: `<div class="rit" data-nome="${nome}" data-k="${k}" style="left:${x - 16 * k}px;top:${y}px;
+    width:${r.w * k}px;height:${h}px;background-image:url(${cartella}${r.src});background-size:${r.larg * k}px auto;
+    background-position:${-r.x * k}px ${-r.y * k}px"></div>`, h };
+}
+function slide(d) {
+  if (d.chiusura) return `<div class="chiusura"><p>${d.chiusura}</p><span class="invito">Leggi tutto su alea.news</span></div>`;
+  let h = d.foto ? fotoPagina(d) : "";
+  if (d.gancio) return h + `<div class="gancio" style="top:64px"><span>${d.gancio}</span></div>`;
+  // ritagli impilati: con la foto stanno nella parte bassa (al massimo circa il 60% della pagina), senza foto al centro
+  const gap = 34, maxH = d.foto ? 780 : 1170;
+  const somma = d.rit.reduce((t, n) => t + R[n].h, 0);
+  const k = Math.min(968 / (390 - 32), (maxH - gap * (d.rit.length - 1)) / somma);
+  const tot = somma * k + gap * (d.rit.length - 1);
+  let y = d.foto ? 1350 - 70 - tot : (1350 - tot) / 2;
+  d.rit.forEach((n) => { const r = rit(n, k, y); h += r.html; y += r.h + gap; });
+  return h;
+}
+
+// ---------------------------------------------------------------------------------------------
+// LETTURA DELLE RIGHE: trova le righe con inchiostro (ciò che si stacca dal fondo della pagina)
+// ---------------------------------------------------------------------------------------------
+const bg = parseInt(F.fondo.slice(1), 16), lumFondo = .3 * (bg >> 16) + .59 * ((bg >> 8) & 255) + .11 * (bg & 255);
+const immagini = {};
+const carica = (src) => immagini[src] ||= new Promise((ok) => { const img = new Image(); img.onload = () => ok(img); img.onerror = () => ok(null); img.src = cartella + src; });
+async function leggiRighe(r) {
+  const img = await carica(r.src);
+  if (!img) return { f: 2, bande: [] };
+  const f = img.naturalWidth / r.larg, W = Math.round(r.w * f), H = Math.round(r.h * f);
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const g = c.getContext("2d"); g.drawImage(img, -r.x * f, -r.y * f);
+  const px = g.getImageData(0, 0, W, H).data, righe = [];
+  for (let y = 0; y < H; y++) {
+    let min = W, max = -1;
+    for (let x = 0; x < W; x++) {
+      const p = (y * W + x) * 4, a = px[p], b = px[p + 1], cc = px[p + 2];
+      const lum = .3 * a + .59 * b + .11 * cc, sat = Math.max(a, b, cc) - Math.min(a, b, cc);
+      if (Math.abs(lum - lumFondo) > 70 || sat > 90) { if (x < min) min = x; max = x; }
+    }
+    righe.push(max >= 0 ? [min, max] : null);
+  }
+  // righe vicine (meno di 3px CSS di vuoto) = la stessa riga di testo o lo stesso grafico
+  const bande = []; let cur = null, vuote = 0;
+  righe.forEach((rg, y) => {
+    if (rg) {
+      if (cur && vuote <= 3 * f) { cur.y1 = y; cur.x0 = Math.min(cur.x0, rg[0]); cur.x1 = Math.max(cur.x1, rg[1]); }
+      else { cur = { y0: y, y1: y, x0: rg[0], x1: rg[1] }; bande.push(cur); }
+      vuote = 0;
+    } else vuote++;
+  });
+  return { f, bande: bande.filter((b) => b.y1 - b.y0 > 2 * f) };
+}
+// tiene solo le righe `righe: [prima, ultima]` e adatta l'altezza del ritaglio al contenuto
+async function aggiustaRitagli(nomi) {
+  for (const n of nomi) {
+    const r = R[n], { f, bande } = await leggiRighe(r);
+    const a = bande[r.righe[0]], b = bande[Math.min(r.righe[1], bande.length - 1)];
+    if (a && b) { r.y += a.y0 / f - 8; r.h = (b.y1 - a.y0) / f + 16; }
+  }
+}
+// PEZZI: ogni riga di testo (alta meno di 50px CSS) su una banda dell'evidenziatore; grafici e fumetti
+// in un riquadro del colore del fondo. Dentro ogni pezzo una copia del ritaglio, spostata per combaciare.
+async function pezzi() {
+  for (const el of document.querySelectorAll(".rit")) {
+    const r = R[el.dataset.nome], k = +el.dataset.k, { f, bande: tutte } = await leggiRighe(r);
+    // un grafico o un fumetto: un solo riquadro che contiene tutto
+    const bande = r.blocco && tutte.length ? [tutte.reduce((u, b) => ({ y0: Math.min(u.y0, b.y0), y1: Math.max(u.y1, b.y1), x0: Math.min(u.x0, b.x0), x1: Math.max(u.x1, b.x1) }))] : tutte;
+    const L = parseFloat(el.style.left), T = parseFloat(el.style.top);
+    el.insertAdjacentHTML("afterend", bande.map((b) => {
+      const riga = !r.blocco && b.y1 - b.y0 < 50 * f, padX = riga ? 12 : 18, padY = riga ? 7 : 16;
+      const bl = L + b.x0 / f * k - padX, bt = T + b.y0 / f * k - padY;
+      return `<div class="pezzo ${riga ? "riga" : "blocco"}" style="left:${bl}px;top:${bt}px;width:${(b.x1 - b.x0) / f * k + 2 * padX}px;height:${(b.y1 - b.y0) / f * k + 2 * padY}px">
+        <div class="copia ${tono} ${inverti ? "inv" : ""}" style="left:${L - bl}px;top:${T - bt}px;width:${el.style.width};height:${el.style.height};
+        background-image:${el.style.backgroundImage.replace(/"/g, "'")};background-size:${el.style.backgroundSize};background-position:${el.style.backgroundPosition}"></div></div>`;
+    }).join(""));
+  }
+}
+
+const A = ARTICOLI[q.get("a") || "litigi"], i = (+q.get("s") || 1) - 1, d = A.slide[i];
+Promise.all(['600 100px "General Sans"', '14px "IBM Plex Mono"'].map((f) => document.fonts.load(f)))
+  .then(() => aggiustaRitagli(d.rit || []))
+  .then(() => {
+    document.getElementById("s").innerHTML = slide(d);
+    return pezzi();
+  });
+</script>
+</body>
+</html>

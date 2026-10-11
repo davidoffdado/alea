@@ -1,0 +1,14 @@
+<!doctype html>
+<!-- Foglio di confronto: le 6 slide di un articolo con un fondo, una riga per evidenziatore. ?a=litigi|moneta&fondo=nero|grigio|bianco -->
+<html lang="it"><head><meta charset="utf-8"><title>àlea · confronto caroselli</title>
+<style>
+  body { margin: 0; padding: 30px; background: #777; color: #fff; font: 18px "IBM Plex Mono", monospace; }
+  .riga { display: flex; gap: 14px; align-items: center; margin-bottom: 22px; }
+  .riga b { width: 130px; flex: none; }
+  img { width: 280px; height: 350px; display: block; }
+</style></head><body><script>
+const q = new URLSearchParams(location.search), a = q.get("a") || "litigi", fo = q.get("fondo") || "nero";
+const ev = { nero: ["lime", "bianco"], bianco: ["lime", "nero"] }[fo];
+for (const e of ev)
+  document.write(`<div class="riga"><b>${fo}<br>+ ${e}</b>${[1,2,3,4,5,6,7].map((s) => `<img src="png/${a}-${fo}-${e}-${s}.png">`).join("")}</div>`);
+</script></body></html>
