@@ -244,7 +244,7 @@
   .alea-logo:hover { color: #d4ff3a; }
   .alea-firma { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .85rem; letter-spacing: .02em; color: #898781; margin: -12px 0 24px; }
   .alea-firma a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
-  .alea-firma a:hover { color: #eb6834; }
+  .alea-firma a:hover { color: #000; background: #d4ff3a; }
 
   .alea-fondo { background: #000; color: #f2f0ea; font-family: "General Sans", system-ui, sans-serif; padding: 0 16px 64px; }
   .alea-fondo * { box-sizing: border-box; }
@@ -274,6 +274,21 @@
   .alea-col a { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }
   .alea-col a:hover { color: #d4ff3a; }
   @media (max-width: 860px) { .alea-nl, .alea-piede, .alea-altri { grid-template-columns: 1fr; } }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style id="alea-tema">
+  :root, :root:not([data-theme="light"]), :root[data-theme] { color-scheme: light !important; --fondo: #ffffff !important; --testo: #111111 !important; --testo-2: #5e5d58 !important;
+    --linea: #e0e0db !important; --fondo-fonti: #f2f2ef !important; --accento: #111111 !important; --macchina: #b4b4af !important;
+    --macchina-soft: #b4b4af40 !important; --tu: #000000 !important; --tu-testo: #111111 !important;
+    --font: "Noto Sans", sans-serif !important; }
+  body { background: #ffffff !important; }
+  h1 { font-family: "General Sans", sans-serif !important; font-weight: 600 !important; letter-spacing: -.04em !important; text-transform: none !important; }
+  .cifre, .griglia, .cella, table, .stato, .barra-titolo, kbd, .asse text, .segno text, .leg { font-family: "IBM Plex Mono", monospace !important; }
+  .tu { background: #d4ff3a; color: #000 !important; padding: 0 .15em; }
+  td.tu { background: none; color: #111111 !important; }
+  .confronto .cella.serie-tu { color: #fff !important; }
+  .g-caso .cella { color: #5e5d58 !important; }                                  /* le lettere della moneta vera: --macchina qui è troppo chiaro */
+  .confronto .cella.serie-caso { background: #5e5d58 !important; color: #fff !important; }
 </style>
 </head>
 
@@ -724,7 +739,7 @@ function mostraRisultati(scorri = true) {
     `è quasi sempre di 5 lanci o più. ${es ? "Quella dell'esempio" : "La tua"} è di <span class="tu">${tu.serie}</span>; ` +
     `una moneta vera si ferma a ${tu.serie} o meno ${quanto(quota(R.serie, (v) => v <= tu.serie))}. ` +
     `Il grafico mostra quanto spesso capita ogni lunghezza in ${fmt(SIM)} sequenze vere simulate; ` +
-    `${es ? "la linea rossa è l'esempio" : "la linea rossa sei tu"}.`;
+    `${es ? "la linea nera è l'esempio" : "la linea nera sei tu"}.`;
   istogramma(document.getElementById("ch-serie"), {
     valori: R.serie, dominio: [2, 16], tuo: tu.serie, etichettaX: "serie più lunga (lanci)", etichettaTu: chi,
     tip: (d) => `serie più lunga di <b>${d.x}</b>: ${pct(d.p, 1)} delle sequenze vere`,
@@ -735,7 +750,7 @@ function mostraRisultati(scorri = true) {
     `Il secondo indizio sono i cambi. Con una moneta vera, dopo una testa viene una croce una volta su due: ` +
     `in cento lanci ci si aspettano circa 50 cambi. Chi inventa tende ad alternare di più, per «compensare» ` +
     `le serie che evita. ${es ? "L'esempio cambia" : "Tu hai cambiato"} <span class="tu">${tu.cambi} volte</span>: ` +
-    `la linea rossa mostra dove ${es ? "cade" : "cadi"}.`;
+    `la linea nera mostra dove ${es ? "cade" : "cadi"}.`;
   istogramma(document.getElementById("ch-cambi"), {
     valori: R.cam, dominio: [25, 75], tuo: tu.cambi, etichettaX: "numero di cambi", etichettaTu: chi,
     tip: (d) => `<b>${d.x}</b> cambi: ${pct(d.p, 1)} delle sequenze vere`,
@@ -821,7 +836,7 @@ function leggiSoltanto() {
    Parametri:
      valori     i risultati delle sequenze simulate (es. 20.000 serie più lunghe)
      dominio    [minimo, massimo] dell'asse orizzontale
-     tuo        il valore del lettore, segnato con la linea rossa
+     tuo        il valore del lettore, segnato con la linea nera
      etichettaX il nome dell'asse orizzontale
      etichettaTu come chiamare il valore segnato: "tu" oppure "esempio"
      tip        funzione che scrive il testo del tooltip per una barra
@@ -1046,7 +1061,7 @@ disegnaInput();   // primo disegno della griglia vuota
       </form>
     </div>
     <footer class="alea-piede">
-      <div><h4>about</h4><p>àlea è un progetto di data e visual journalism ideato da <a href="https://www.davidruffini.com" target="_blank" rel="noopener">David Ruffini</a> per raccontare storie su cultura, società, politica, scienza e molto altro.</p></div>
+      <div><h4>about</h4><p>àlea è un progetto di data e visual journalism ideato da <a href="https://www.davidruffini.com" target="_blank" rel="noopener">David Ruffini</a> per raccontare storie su probabilità, società, cultura e molto altro.</p></div>
       <div class="alea-col"><h4>contatti</h4><a href="mailto:ciao@alea.news">ciao@alea.news</a></div>
       
     </footer>
