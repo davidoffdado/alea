@@ -76,6 +76,7 @@
   <button id="b-nuovo">Nuovo</button>
   <label class="bottone">Apri<input type="file" id="b-apri" accept=".json" hidden></label>
   <button id="b-salva">Salva progetto</button>
+  <button id="b-guida">Guida</button>
   <span class="spazio"></span>
   <button id="b-esporta">Esporta HTML</button>
   <button id="b-pubblica" class="primario">Pubblica…</button>
@@ -103,6 +104,20 @@
   <button onclick="this.closest('dialog').close()">Annulla</button>
 </dialog>
 <dialog id="d-pubblica"></dialog>
+<dialog id="d-guida">
+  <h2>Come si usa</h2>
+  <ol>
+    <li><b>Nuovo</b> → scegli un modello. Nel riquadro <b>Articolo</b>: titolo, sommario, data, fondo, colore, schermata iniziale.</li>
+    <li>Scrivi i blocchi; <b>+ aggiungi</b> tra un blocco e l'altro. Nei paragrafi: riga vuota = nuovo paragrafo,
+      <code>**grassetto**</code>, <code>*corsivo*</code>, <code>==evidenziato==</code>, <code>[link](https://…)</code>, <code>{risposta}</code>.</li>
+    <li>Grafici: incolla le celle da Excel o Sheets con le intestazioni; «Da evidenziare» = nomi separati da virgola.</li>
+    <li><b>Salva progetto</b> spesso (file .json, si riapre con <b>Apri</b>).</li>
+    <li>Per pubblicare: <b>Esporta HTML</b> in <code>Desktop/alea/articoli/</code>, poi <b>Pubblica…</b> per i passaggi.</li>
+    <li>Cose complesse: chiedi a Claude il codice per un blocco <b>Codice HTML</b> (resta nel progetto). Le modifiche fatte a mano sull'HTML esportato si perdono se esporti di nuovo.</li>
+  </ol>
+  <p class="aiuto">La guida completa è in <code>Desktop/alea/strumenti/GUIDA.md</code>.</p>
+  <button onclick="this.closest('dialog').close()">Chiudi</button>
+</dialog>
 
 <script>
 // =============================================================================================
@@ -230,12 +245,20 @@ function runtime() {
   const num = (v, d = 1) => v.toLocaleString("it-IT", { maximumFractionDigits: d });
   const chiave = (s) => String(s).trim().toLowerCase();
 
-  // CSV incollato da Excel/Sheets: separatore tab, ; o , (con ; la virgola è il decimale)
+  // CSV incollato da Excel/Sheets: separatore tab, ; o ,. Con tab e ; la virgola è il decimale e il punto
+  // separa le migliaia («1.500» = 1500); senza virgola un punto isolato è il decimale («1.5» = 1,5)
   function leggiCSV(t) {
     const righe = t.trim().split(/\r?\n/).filter((r) => r.trim());
     if (righe.length < 2) return null;
     const sep = righe[0].includes("\t") ? "\t" : righe[0].includes(";") ? ";" : ",";
-    const n = (v) => parseFloat(String(v).trim().replace(sep === "," ? /(?!)/ : /\./g, "").replace(",", "."));
+    const n = (v) => {
+      let x = String(v).trim();
+      if (sep !== ",") {
+        if (x.includes(",")) x = x.replace(/\./g, "").replace(",", ".");
+        else if (/^-?\d{1,3}(\.\d{3})+$/.test(x)) x = x.replace(/\./g, "");
+      }
+      return parseFloat(x);
+    };
     const testa = righe[0].split(sep).map((s) => s.trim());
     const dati = righe.slice(1).map((r) => { const c = r.split(sep); return { nome: c[0].trim(), v: c.slice(1).map(n) }; });
     return { testa, dati };
@@ -661,6 +684,7 @@ $("b-salva").onclick = () => salvaFile(JSON.stringify(A, null, 1), `${indirizzo(
 $("b-esporta").onclick = () => salvaFile(costruisci(A), `${indirizzo()}.html`, "text/html");
 $("b-apri").onchange = async (e) => { try { A = JSON.parse(await e.target.files[0].text()); disegnaEditor(); anteprima(); } catch (err) { alert("Non riesco a leggere questo file."); } e.target.value = ""; };
 $("b-nuovo").onclick = () => $("d-nuovo").showModal();
+$("b-guida").onclick = () => $("d-guida").showModal();
 document.querySelectorAll("[data-modello]").forEach((b) => b.onclick = () => { A = MODELLI[b.dataset.modello](); $("d-nuovo").close(); disegnaEditor(); cambiato(); });
 
 // ---- istruzioni per pubblicare (con la riga già pronta per src/data/articoli.js)
