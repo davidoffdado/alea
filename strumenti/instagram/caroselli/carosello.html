@@ -13,7 +13,7 @@
 <meta charset="utf-8">
 <title>àlea · caroselli v4</title>
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@600&display=block" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans:ital,wght@0,400;0,600;1,400&display=block" rel="stylesheet">
 <script src="temi.js"></script>
 <script src="ritagli/elenco.js"></script>
 <style>
@@ -36,6 +36,10 @@
   .riga .copia.chiaro { mix-blend-mode: screen; filter: contrast(1.3); }
   .riga .copia.chiaro.inv { filter: invert(1) hue-rotate(180deg) contrast(1.3); }
   .gancio { position: absolute; left: 56px; right: 56px; font-weight: 600; font-size: 108px; line-height: 1.1; letter-spacing: -.045em; }
+  /* testo scritto a mano (campo testo delle slide): come le righe dei ritagli, Noto Sans su bande dell'evidenziatore */
+  .scritto { position: absolute; left: 56px; width: 968px; font: 40px/1.62 "Noto Sans", sans-serif; }
+  .scritto .titolo { font-weight: 600; font-size: 54px; line-height: 1.45; margin-bottom: 14px; }
+  .scritto span { background: var(--ev); color: var(--su); padding: 3px .25em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
   .gancio span { background: var(--ev); color: var(--su); padding: 0 .12em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
   /* credito di ogni foto, nell'angolo in basso a destra della foto stessa */
   .credito { position: absolute; right: 0; bottom: 0; font: 13px/1.3 "IBM Plex Mono", monospace; background: var(--fondo); color: var(--testo2); padding: 4px 8px; }
@@ -53,7 +57,8 @@ const R = {};
 for (const [nome, e] of Object.entries(ELENCO)) R[nome] = { src: nome + ".png", larg: 500, x: 0, w: 390, y: 0, h: 1000, righe: e.righe || [0, 999], blocco: e.blocco };
 
 // ---------------------------------------------------------------------------------------------
-// CONTENUTI: foto (una = a tutta pagina, più = griglia di `col` colonne), ritagli, gancio (solo copertina).
+// CONTENUTI: foto (una = a tutta pagina, più = griglia di `col` colonne), ritagli, gancio (solo copertina),
+// titolo e testo scritti a mano (con lo stesso aspetto delle righe dei ritagli; *corsivo*, **grassetto**).
 // ---------------------------------------------------------------------------------------------
 // crediti delle foto (da discorsi_camera/applausi/tabelle/foto.csv e Wikimedia Commons), scritti su ogni foto
 const CREDITI = {
@@ -86,11 +91,12 @@ const ARTICOLI = {
   ] },
   moneta: { slide: [
     { gancio: "Non siamo bravi a simulare il caso", foto: ["eniac-operatrici.jpg"] },
-    { foto: ["eniac-beck-snyder.jpg"], rit: ["m_gioco"] },
-    { foto: ["ibm-nasa.jpg"], rit: ["m_rand"] },
-    { rit: ["m_serie_t", "m_serie_g"] },
-    { rit: ["m_cambi_t", "m_cambi_g"] },
-    { rit: ["m_oracolo_t", "m_oracolo_g"] },
+    { foto: ["eniac-beck-snyder.jpg"], titolo: "Questa storia inizia con un gioco.",
+      testo: "Immagina di lanciare una moneta cento volte, scegliendo ogni volta l'esito del lancio: T per testa, C per croce." },
+    { foto: ["ibm-nasa.jpg"], testo: "Gli esseri umani non se la cavano troppo bene a simulare la casualità. Per questo motivo, nel 1955 la RAND Corporation pubblicò il libro *A Million Random Digits with 100,000 Normal Deviates*, un milione di cifre casuali diventato il riferimento per le simulazioni Monte Carlo, che richiedono campioni casuali." },
+    { testo: "Probabilmente, quando hai immaginato di lanciare una moneta, non hai inserito sequenze di esiti uguali per troppi lanci. In realtà, su cento lanci veri, la serie più lunga è quasi sempre di 5 lanci o più.", rit: ["m_serie_g"] },
+    { testo: "Allo stesso modo, in cento lanci veri ci si aspettano circa 50 cambi tra testa e croce, ma chi inventa tende ad alternare di più.", rit: ["m_cambi_g"] },
+    { testo: "Un «oracolo» progettato da Scott Aaronson ha il compito di prevedere il prossimo esito che una persona inventerà: all'inizio dell'articolo prova a prevedere le tue mosse.", rit: ["m_oracolo_g"] },
     { chiusura: "Inventa cento lanci di moneta e scopri se un programma riesce a prevederli." },
   ] },
 };
@@ -124,17 +130,25 @@ function rit(nome, k, y, x = 56) {
     width:${r.w * k}px;height:${h}px;background-image:url(${cartella}${r.src});background-size:${r.larg * k}px auto;
     background-position:${-r.x * k}px ${-r.y * k}px"></div>`, h };
 }
+// *corsivo* e **grassetto** nei testi scritti a mano
+const md = (t) => String(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*(.+?)\*/g, "<i>$1</i>");
 function slide(d) {
   if (d.chiusura) return `<div class="chiusura"><p>${d.chiusura}</p><span class="invito">Leggi tutto su alea.news</span></div>`;
   let h = d.foto ? fotoPagina(d) : "";
   if (d.gancio) return h + `<div class="gancio" style="top:64px"><span>${d.gancio}</span></div>`;
-  // ritagli impilati: con la foto stanno nella parte bassa (al massimo circa il 60% della pagina), senza foto al centro
-  const gap = 34, maxH = d.foto ? 780 : 1170;
-  const somma = d.rit.reduce((t, n) => t + R[n].h, 0);
-  const k = Math.min(968 / (390 - 32), (maxH - gap * (d.rit.length - 1)) / somma);
-  const tot = somma * k + gap * (d.rit.length - 1);
+  // testo scritto (facoltativo) e ritagli impilati: con la foto stanno nella parte bassa (al massimo circa il 60%
+  // della pagina), senza foto al centro. Il testo si misura prima, per sapere quanto spazio resta ai ritagli
+  const gap = 34, maxH = d.foto ? 780 : 1170, rr = d.rit || [];
+  const scritto = d.testo ? `<div class="scritto">${d.titolo ? `<div class="titolo"><span>${md(d.titolo)}</span></div>` : ""}<span>${md(d.testo)}</span></div>` : "";
+  let hs = 0;
+  if (scritto) { const p = document.createElement("div"); p.innerHTML = scritto; document.body.append(p); hs = p.firstChild.offsetHeight; p.remove(); }
+  const somma = rr.reduce((t, n) => t + R[n].h, 0);
+  const posto = maxH - hs - gap * (rr.length - (scritto ? 0 : 1));
+  const k = somma ? Math.min(968 / (390 - 32), posto / somma) : 0;
+  const tot = hs + somma * k + gap * (rr.length - (scritto ? 0 : 1));
   let y = d.foto ? 1350 - 70 - tot : (1350 - tot) / 2;
-  d.rit.forEach((n) => { const r = rit(n, k, y); h += r.html; y += r.h + gap; });
+  if (scritto) { h += scritto.replace('class="scritto"', `class="scritto" style="top:${y}px"`); y += hs + gap; }
+  rr.forEach((n) => { const r = rit(n, k, y); h += r.html; y += r.h + gap; });
   return h;
 }
 
@@ -198,7 +212,7 @@ async function pezzi() {
 }
 
 const A = ARTICOLI[q.get("a") || "litigi"], i = (+q.get("s") || 1) - 1, d = A.slide[i];
-Promise.all(['600 100px "General Sans"', '14px "IBM Plex Mono"'].map((f) => document.fonts.load(f)))
+Promise.all(['600 100px "General Sans"', '14px "IBM Plex Mono"', '40px "Noto Sans"', '600 40px "Noto Sans"', 'italic 40px "Noto Sans"'].map((f) => document.fonts.load(f)))
   .then(() => aggiustaRitagli(d.rit || []))
   .then(() => {
     document.getElementById("s").innerHTML = slide(d);

@@ -26,6 +26,7 @@ Esempio di slide in `ARTICOLI`:
 { foto: ["mario_draghi.jpg", "matteo_salvini.jpg"], col: 2, rit: ["l_draghi_testo"] },   // 2 foto affiancate + un ritaglio
 { gancio: "Testo della copertina", foto: [...], col: 3 },                                  // copertina
 { chiusura: "Frase finale." },                                                              // ultima slide: frase + «Leggi tutto su alea.news»
+{ foto: ["ibm-nasa.jpg"], titolo: "Un titolo", testo: "Testo scritto a mano, *corsivo*.", rit: ["m_serie_g"] },  // testo scritto (con le righe evidenziate come i ritagli) + ritaglio
 ```
 
 Le foto stanno in `foto/`. Una foto nuova va aggiunta anche in `CREDITI`.
