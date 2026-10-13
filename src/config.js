@@ -16,8 +16,8 @@ export const SITO = {
   substack: "https://aalea.substack.com",
   // i social senza indirizzo non vengono mostrati
   social: [
-    { nome: "instagram", url: "" },
-    { nome: "linkedin", url: "" },
+    { nome: "instagram", url: "https://www.instagram.com/alea.rivista/" },
+    { nome: "linkedin", url: "https://www.linkedin.com/company/%C3%A0lea/" },
   ],
 };
 
