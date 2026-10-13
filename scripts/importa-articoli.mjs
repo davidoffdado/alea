@@ -139,6 +139,7 @@ ${info.data ? `<meta property="article:published_time" content="${info.data}">` 
 <meta name="twitter:description" content="${esc(info.sommario)}">
 <meta name="twitter:image" content="${immagine}">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>${esc(titolo)}</title>`;
 }
 
