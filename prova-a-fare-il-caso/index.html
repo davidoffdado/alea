@@ -238,12 +238,11 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>Non siamo bravi a simulare la casualità · àlea</title>
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,600,700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
   .alea-testa { display: flex; justify-content: center; background: #000; padding: 14px 16px 12px; position: relative; z-index: 30; }
   .alea-logo { font-family: "General Sans", system-ui, sans-serif; font-weight: 700; font-size: 52px; letter-spacing: -0.07em; line-height: .9; color: #f2f0ea; text-decoration: none; }
   .alea-logo:hover { color: #d4ff3a; }
-  .alea-firma { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .85rem; letter-spacing: .02em; color: #898781; margin: -12px 0 24px; }
+  .alea-firma { font-family: "Noto Sans", sans-serif; font-size: .9rem; color: #898781; margin: -12px 0 24px; }
   .alea-firma a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
   .alea-firma a:hover { color: #000; background: #d4ff3a; }
 
@@ -268,11 +267,11 @@
   .alea-iscr button { font: inherit; font-weight: 600; background: #d4ff3a; color: #000; border: 1px solid #d4ff3a; border-radius: 0; padding: 12px 20px; cursor: pointer; }
   .alea-iscr button:hover { background: #f2f0ea; border-color: #f2f0ea; }
   .alea-piede { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 28px; border-top: 1px solid #2a2a28; margin-top: 64px; padding-top: 28px; }
-  .alea-piede h4 { font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 600; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #8b8880; margin: 0 0 12px; }
+  .alea-piede h4 { font-weight: 600; font-size: .85rem; color: #8b8880; margin: 0 0 12px; }
   .alea-piede p { margin: 0; line-height: 1.5; color: #cfccc4; max-width: 46ch; }
   .alea-piede p a { text-decoration: underline; text-underline-offset: 3px; }
   .alea-col { display: flex; flex-direction: column; gap: 8px; }
-  .alea-col a { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }
+  .alea-col a { font-size: .9rem; font-weight: 500; }
   .alea-col a:hover { color: #d4ff3a; }
   @media (max-width: 860px) { .alea-nl, .alea-piede, .alea-altri { grid-template-columns: 1fr; } }
 </style>
@@ -284,7 +283,9 @@
     --font: "Noto Sans", sans-serif !important; }
   body { background: #ffffff !important; }
   h1 { font-family: "General Sans", sans-serif !important; font-weight: 600 !important; letter-spacing: -.04em !important; text-transform: none !important; }
-  .cifre, .griglia, .cella, table, .stato, .barra-titolo, kbd, .asse text, .segno text, .leg { font-family: "IBM Plex Mono", monospace !important; }
+  .cifre, .griglia, .cella, table, .stato, .asse text, .segno text, .leg { font-variant-numeric: tabular-nums; }
+  .barra-titolo { font-size: .85rem !important; font-weight: 600 !important; letter-spacing: 0 !important; text-transform: none !important; }
+  .tasti button { text-transform: none !important; letter-spacing: 0 !important; }
   .tu { background: #d4ff3a; color: #000 !important; padding: 0 .15em; }
   td.tu { background: none; color: #111111 !important; }
   .confronto .cella.serie-tu { color: #fff !important; }
@@ -309,17 +310,17 @@
   <p>Mentre lanci, <span class="macchina">un programma</span> proverà a indovinare il tuo prossimo lancio guardando i risultati usciti fino a quel momento. Se preferisci, puoi anche <button class="link" id="salta" type="button">leggere e basta</button>.</p>
 
   <div class="finestra">
-    <div class="barra-titolo">Tavola 1 · Cento lanci inventati</div>
+    <div class="barra-titolo">Tavola 1 — Cento lanci inventati</div>
     <div class="dentro">
       <!-- i numeri dentro <b id="..."> li aggiorna JavaScript a ogni lancio -->
       <div class="stato">
-        <span>lancio <b class="tu" id="conta">000</b>/100</span>
-        <span>il programma ne ha indovinati <b class="macchina" id="presi">0</b> (<b class="macchina" id="perc">–</b>)</span>
+        <span>Lancio <b class="tu" id="conta">0</b> di 100</span>
+        <span>Il programma ne ha indovinati <b class="macchina" id="presi">0</b> (<b class="macchina" id="perc">–</b>)</span>
       </div>
       <!-- pulsanti sopra la griglia: così restano visibili senza scorrere, anche su schermi bassi -->
       <div class="tasti">
-        <button id="bt-t" type="button">[T] testa</button>
-        <button id="bt-c" type="button">[C] croce</button>
+        <button id="bt-t" type="button">Testa</button>
+        <button id="bt-c" type="button">Croce</button>
       </div>
       <!-- griglia vuota: le 100 caselle le crea JavaScript. aria-live: i lettori di schermo annunciano i cambiamenti -->
       <div class="griglia" id="griglia" aria-live="polite"></div>
@@ -338,7 +339,7 @@
 <article id="articolo" hidden>
   <div class="col">
     <h1>Non siamo bravi a simulare la casualità</h1>
-<p class="alea-firma">di <a href="https://www.davidruffini.com" target="_blank" rel="noopener">David Ruffini</a> · 10 ottobre 2026</p>
+<p class="alea-firma">di <a href="https://www.davidruffini.com" target="_blank" rel="noopener">David Ruffini</a>, 10 ottobre 2026</p>
 
     <p>Nella seconda metà degli anni Quaranta i metodi Monte Carlo iniziarono a prendere sempre più piede all'interno della ricerca scientifica, specialmente nel campo della fisica, della statistica, della ricerca operativa e, in generale, nella matematica applicata. Questi approcci si ponevano come obiettivo di risolvere determinati problemi numerici, specialmente in sistemi complessi, basandosi sul campionamento casuale, con l'idea che un preciso risultato si possa approssimare abbastanza bene facendo tanti tentativi e facendo emergere uno schema dalle varie prove casuali eseguite. Del tipo, prova e vedi.</p>
     <p>Il problema principale era che alla base del metodo Monte Carlo c'è la casualità e, se ancora oggi la maggior parte dei numeri «casuali» generati dai computer è in realtà pseudo-casuale, cioè prodotta da un algoritmo che, partendo dallo stesso punto, restituisce sempre la stessa sequenza, negli anni Quaranta la situazione era ancora più complessa. Nel 1947 il progetto RAND, nato dentro la Douglas Aircraft Company, costruì un apparecchio elettronico per generare un milione di cifre casuali e 100.000 valori di una distribuzione normale, derivati dalle prime 500.000 cifre del campione. Nel 1955 la RAND Corporation, diventata nel frattempo un ente indipendente, pubblicò il libro <em>A Million Random Digits with 100,000 Normal Deviates</em>, dove vennero inserite le cifre generate, creando un <em>gold standard</em> per le simulazioni Monte Carlo.</p>
@@ -594,7 +595,7 @@ function disegnaInput() {
       + (presa[i] ? " presa" : "")
       + (i === seq.length ? " prossima" : "");
   });
-  document.getElementById("conta").textContent = String(seq.length).padStart(3, "0");   // 7 -> "007"
+  document.getElementById("conta").textContent = String(seq.length);   // 7 -> "007"
   document.getElementById("presi").textContent = indovinati;
   document.getElementById("perc").textContent = seq.length ? pct(indovinati / seq.length) : "–";
   const finito = seq.length >= N;
