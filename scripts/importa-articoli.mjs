@@ -41,12 +41,11 @@ const TESTATA = `
 // tutto lo stile aggiunto, con prefisso alea- per non toccare quello dell'articolo
 const STILE = `
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,600,700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
   .alea-testa { display: flex; justify-content: center; background: #000; padding: 14px 16px 12px; position: relative; z-index: 30; }
   .alea-logo { font-family: "General Sans", system-ui, sans-serif; font-weight: 700; font-size: 52px; letter-spacing: -0.07em; line-height: .9; color: #f2f0ea; text-decoration: none; }
   .alea-logo:hover { color: #d4ff3a; }
-  .alea-firma { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .85rem; letter-spacing: .02em; color: #898781; margin: -12px 0 24px; }
+  .alea-firma { font-family: "Noto Sans", sans-serif; font-size: .9rem; color: #898781; margin: -12px 0 24px; }
   .alea-firma a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
   .alea-firma a:hover { color: #000; background: #d4ff3a; }
 
@@ -71,20 +70,20 @@ const STILE = `
   .alea-iscr button { font: inherit; font-weight: 600; background: #d4ff3a; color: #000; border: 1px solid #d4ff3a; border-radius: 0; padding: 12px 20px; cursor: pointer; }
   .alea-iscr button:hover { background: #f2f0ea; border-color: #f2f0ea; }
   .alea-piede { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 28px; border-top: 1px solid #2a2a28; margin-top: 64px; padding-top: 28px; }
-  .alea-piede h4 { font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 600; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #8b8880; margin: 0 0 12px; }
+  .alea-piede h4 { font-weight: 600; font-size: .85rem; color: #8b8880; margin: 0 0 12px; }
   .alea-piede p { margin: 0; line-height: 1.5; color: #cfccc4; max-width: 46ch; }
   .alea-piede p a { text-decoration: underline; text-underline-offset: 3px; }
   .alea-col { display: flex; flex-direction: column; gap: 8px; }
-  .alea-col a { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }
+  .alea-col a { font-size: .9rem; font-weight: 500; }
   .alea-col a:hover { color: #d4ff3a; }
   @media (max-width: 860px) { .alea-nl, .alea-piede, .alea-altri { grid-template-columns: 1fr; } }
 </style>`;
 
 const dataIt = (d) => new Date(d + "T12:00:00").toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
 
-// firma sotto il titolo: "di David Ruffini · 6 ottobre 2026"
+// firma sotto il titolo: "di David Ruffini, 6 ottobre 2026"
 const firma = (info) => `
-<p class="alea-firma">di <a href="${SITO.sitoAutore}" target="_blank" rel="noopener">${esc(SITO.autore)}</a>${info.data ? ` · ${dataIt(info.data)}` : ""}</p>`;
+<p class="alea-firma">di <a href="${SITO.sitoAutore}" target="_blank" rel="noopener">${esc(SITO.autore)}</a>${info.data ? `, ${dataIt(info.data)}` : ""}</p>`;
 
 // fondo di àlea, come in fondo alla home (src/components/Fondo.astro), più l'invito agli altri articoli
 function fondo(info) {

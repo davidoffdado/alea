@@ -1,6 +1,7 @@
 // TEMA DEGLI ARTICOLI DI ÀLEA (scelto il 2026-10-11): fondo bianco, evidenziatore lime, dati in nero.
 // Stessi caratteri per tutti gli articoli: General Sans per i titoli, Noto Sans per il testo,
-// IBM Plex Mono per etichette e numeri. Lo aggiunge importa-articoli.mjs in fondo all'<head> di ogni articolo:
+// Noto Sans piccolo e grigio anche per etichette e numeri (dal 2026-10-21 niente monospazio né maiuscolo spaziato,
+// i numeri restano allineati con le cifre a larghezza fissa, tabular-nums). Lo aggiunge importa-articoli.mjs in fondo all'<head> di ogni articolo:
 // le pagine originali nei progetti non cambiano. !important perché le pagine definiscono i loro colori;
 // i selettori :root:not(...) e :root[data-theme] servono a battere anche il tema scuro automatico della pagina.
 const T = {
@@ -26,7 +27,11 @@ export const CSS_TEMA = {
   h1, .scena h2, .metodo h2 { ${TITOLI} }
   .fumetto q { font-family: "Noto Sans", sans-serif !important; font-weight: 500 !important; }
   .chip.lite, .reazione .fumetto { color: #fff !important; }
-  mark.pennarello { background: ${T.ev} !important; color: #000 !important; }`,
+  mark.pennarello { background: ${T.ev} !important; color: #000 !important; }
+  .metodo h3, .scena .data, .fumetto .sten { font-family: "Noto Sans", sans-serif !important; letter-spacing: 0 !important; text-transform: none !important; }
+  .metodo h3, .scena .data { font-size: .85rem !important; }
+  .fumetto .sten { font-size: .78rem !important; }
+  .fumetto .reaz { font-family: "Noto Sans", sans-serif !important; }`,
   "prova-a-fare-il-caso": `
   ${RADICE} { color-scheme: light !important; --fondo: ${T.fondo} !important; --testo: ${T.testo} !important; --testo-2: ${T.testo2} !important;
     --linea: ${T.linea} !important; --fondo-fonti: ${T.tenue} !important; --accento: ${T.testo} !important; --macchina: ${T.resto} !important;
@@ -34,7 +39,9 @@ export const CSS_TEMA = {
     --font: "Noto Sans", sans-serif !important; }
   body { background: ${T.fondo} !important; }
   h1 { ${TITOLI} text-transform: none !important; }
-  .cifre, .griglia, .cella, table, .stato, .barra-titolo, kbd, .asse text, .segno text, .leg { font-family: "IBM Plex Mono", monospace !important; }
+  .cifre, .griglia, .cella, table, .stato, .asse text, .segno text, .leg { font-variant-numeric: tabular-nums; }
+  .barra-titolo { font-size: .85rem !important; font-weight: 600 !important; letter-spacing: 0 !important; text-transform: none !important; }
+  .tasti button { text-transform: none !important; letter-spacing: 0 !important; }
   .tu { background: ${T.ev}; color: #000 !important; padding: 0 .15em; }
   td.tu { background: none; color: ${T.testo} !important; }
   .confronto .cella.serie-tu { color: #fff !important; }
@@ -42,7 +49,15 @@ export const CSS_TEMA = {
   .confronto .cella.serie-caso { background: ${T.testo2} !important; color: #fff !important; }`,
 };
 
-// testi che parlano dei vecchi colori e vanno aggiornati: [cerca, sostituisci]
+// testi che vanno aggiornati (vecchi colori, etichette da macchina da scrivere): [cerca, sostituisci]
 export const TESTI_TEMA = {
-  "prova-a-fare-il-caso": [["la linea rossa", "la linea nera"]],
+  "prova-a-fare-il-caso": [
+    ["la linea rossa", "la linea nera"],
+    ["Tavola 1 · Cento lanci inventati", "Tavola 1 — Cento lanci inventati"],
+    ['lancio <b class="tu" id="conta">000</b>/100', 'Lancio <b class="tu" id="conta">0</b> di 100'],
+    ['String(seq.length).padStart(3, "0")', "String(seq.length)"],
+    ["<span>il programma ne ha indovinati", "<span>Il programma ne ha indovinati"],
+    ["[T] testa", "Testa"],
+    ["[C] croce", "Croce"],
+  ],
 };

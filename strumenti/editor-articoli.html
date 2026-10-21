@@ -135,13 +135,12 @@ body.bloccato { overflow: hidden; }
 a { color: inherit; text-decoration: underline; text-decoration-color: var(--ev); text-decoration-thickness: 3px; text-underline-offset: 3px; }
 mark { background: var(--ev); color: var(--su-ev); padding: 0 .12em; }
 b, strong { font-weight: 600; }
-.mono { font-family: "IBM Plex Mono", monospace; }
 
 /* apertura */
 .apertura { padding-top: 56px; padding-bottom: 8px; }
-.kicker { font: 500 .78rem "IBM Plex Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--testo2); margin: 0 0 14px; }
+.kicker { font-size: .85rem; font-weight: 600; color: var(--testo2); margin: 0 0 14px; }
 h1 { font-family: "General Sans", sans-serif; font-weight: 600; font-size: clamp(2.4rem, 8vw, 4.4rem); line-height: 1.02; letter-spacing: -.045em; margin: 0 0 22px; text-wrap: balance; }
-.firma { font: .85rem "IBM Plex Mono", monospace; color: var(--testo2); margin: -6px 0 22px; }
+.firma { font-size: .9rem; color: var(--testo2); margin: -6px 0 22px; }
 .sommario { font-size: 1.25rem; line-height: 1.5; color: var(--testo2); margin: 0 0 34px; }
 
 /* testo */
@@ -150,7 +149,7 @@ h1 { font-family: "General Sans", sans-serif; font-weight: 600; font-size: clamp
 h2.intertitolo { font-family: "General Sans", sans-serif; font-weight: 600; font-size: 1.9rem; line-height: 1.1; letter-spacing: -.035em; margin: 2em auto .6em; }
 blockquote { margin: 1.8em auto; padding: 0 16px 0 22px; border-left: 6px solid var(--ev); max-width: 680px; }
 blockquote p { font-family: "General Sans", sans-serif; font-weight: 600; font-size: 1.7rem; line-height: 1.2; letter-spacing: -.03em; margin: 0 0 .4em; }
-blockquote cite { font: normal .85rem "IBM Plex Mono", monospace; color: var(--testo2); }
+blockquote cite { font-style: normal; font-size: .9rem; color: var(--testo2); }
 .numero { margin: 2em auto; }
 .numero .valore { display: block; font-family: "General Sans", sans-serif; font-weight: 600; font-size: clamp(4rem, 18vw, 8rem); line-height: .95; letter-spacing: -.06em; }
 .numero .valore span { background: var(--ev); color: var(--su-ev); padding: 0 .08em; }
@@ -162,12 +161,12 @@ figure { margin: 2em auto; }
 figure img { display: block; width: 100%; height: auto; }
 figure.bn img { filter: grayscale(1) contrast(1.1); }
 figcaption { font-size: .85rem; line-height: 1.45; color: var(--testo2); margin-top: 8px; }
-figcaption .credito { font-family: "IBM Plex Mono", monospace; font-size: .75rem; }
+figcaption .credito { font-size: .8rem; color: var(--testo2); }
 .g-titolo { font-family: "General Sans", sans-serif; font-weight: 600; font-size: 1.35rem; line-height: 1.15; letter-spacing: -.025em; margin: 0 0 4px; }
 .g-sotto { font-size: .9rem; color: var(--testo2); margin: 0 0 12px; }
 .g-area { width: 100%; }
 .g-area svg { display: block; overflow: visible; }
-.g-area text { font: 12px "IBM Plex Mono", monospace; fill: var(--testo2); }
+.g-area text { font: 12px "Noto Sans", sans-serif; font-variant-numeric: tabular-nums; fill: var(--testo2); }
 .g-area text.nome { font: 13px "Noto Sans", sans-serif; fill: var(--testo); }
 .g-area text.hl { fill: var(--testo); font-weight: 600; }
 .g-segno { fill: var(--resto); transition: fill .45s, opacity .45s; }
@@ -175,7 +174,7 @@ figcaption .credito { font-family: "IBM Plex Mono", monospace; font-size: .75rem
 .g-linea { fill: none; stroke: var(--resto); stroke-width: 2; transition: stroke .45s, stroke-width .45s; }
 .g-linea.hl { stroke: var(--dato); stroke-width: 3.5; }
 .g-griglia { stroke: var(--linea); stroke-width: 1; }
-.g-fonte { font: .72rem "IBM Plex Mono", monospace; color: var(--testo2); margin-top: 8px; }
+.g-fonte { font-size: .8rem; color: var(--testo2); margin-top: 8px; }
 
 /* scrollytelling: la figura resta ferma, i passi le scorrono sopra */
 .scrolly { position: relative; margin: 3em 0; }
@@ -209,7 +208,7 @@ figcaption .credito { font-family: "IBM Plex Mono", monospace; font-size: .75rem
 /* nota metodologica: fondo nero a tutta larghezza */
 .nota { background: #000; color: #d6d5cf; margin-top: 96px; padding: 64px 0 80px; font-size: .95rem; line-height: 1.65; }
 .nota h2 { font-family: "General Sans", sans-serif; font-weight: 600; font-size: 2.2rem; letter-spacing: -.04em; color: #fff; margin: 0 0 24px; }
-.nota h3 { font: 500 .75rem "IBM Plex Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--ev); margin: 32px 0 8px; }
+.nota h3 { font-size: .9rem; font-weight: 600; color: var(--ev); margin: 32px 0 8px; }
 .nota a { color: #fff; }
 .nota b { color: #fff; }
 
@@ -422,7 +421,7 @@ function costruisci(A, opz = {}) {
   const intro = A.intro || {}, mostraIntro = opz.intro !== false;
   const kicker = A.kicker ? `<p class="kicker">${esc(A.kicker)}</p>` : "";
   // il posto della firma: npm run articoli lo sostituisce con la firma del sito
-  const firma = `<p class="firma" id="alea-firma">di David Ruffini${A.data ? " · " + dataIt(A.data) : ""}</p>`;
+  const firma = `<p class="firma" id="alea-firma">di David Ruffini${A.data ? ", " + dataIt(A.data) : ""}</p>`;
   const apertura = intro.tipo === "copertina" && intro.src
     ? `<header class="copertina${intro.bn !== false ? " bn" : ""}"><div class="velo" style="background-image:url('${intro.src}')"></div>
   <div class="col">${kicker}<h1><span>${esc(A.titolo)}</span></h1>${firma}${A.sommario ? `<p class="sommario"><span>${md(A.sommario)}</span></p>` : ""}</div></header>`
@@ -448,7 +447,7 @@ function costruisci(A, opz = {}) {
 <meta name="description" content="${esc(A.sommario)}">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>${CSS_ARTICOLO}</style>
 </head>
 <body class="${A.fondo === "nero" ? "nero" : ""}" style="--ev: ${A.accento || "#d4ff3a"}; --su-ev: ${A.suAccento || "#000"}">

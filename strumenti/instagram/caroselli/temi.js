@@ -1,5 +1,5 @@
 // TEMI DI ÀLEA, "stile 3": stessi caratteri per tutti gli articoli (General Sans per i titoli, Noto Sans per il testo,
-// IBM Plex Mono per etichette e numeri), fondo bianco o nero, un solo colore d'accento.
+// Noto Sans piccolo e grigio anche per etichette e numeri, niente monospazio dal 2026-10-21), fondo bianco o nero, un solo colore d'accento.
 // Un tema = fondo + evidenziatore: nero-lime, nero-bianco, bianco-lime, bianco-nero.
 // Usato da ritagli/temizza.mjs (copie ricolorate degli articoli da fotografare) e da carosello.html.
 // Le pagine vere degli articoli NON vengono modificate.
@@ -23,7 +23,7 @@ const accento = (fondo, e) => fondo === "nero" ? { a: EVID[e].ev, su: "#000" } :
 
 const FONT_TEMA = `
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600&display=block" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=block" rel="stylesheet">`;
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600&display=block" rel="stylesheet">`;
 
 // CSS da aggiungere a ciascun articolo (con !important perché arriva prima dei fogli di stile della pagina)
 function cssSito(articolo, fondo, e) {
@@ -38,7 +38,11 @@ function cssSito(articolo, fondo, e) {
     h1, .scena h2, .metodo h2 { ${titoli} }
     .fumetto q { font-family: "Noto Sans", sans-serif !important; font-weight: 500 !important; }
     .chip.lite, .reazione .fumetto { color: ${A.su} !important; }
-    mark.pennarello { background: ${E.ev} !important; color: ${E.su} !important; }`;
+    mark.pennarello { background: ${E.ev} !important; color: ${E.su} !important; }
+    .metodo h3, .scena .data, .fumetto .sten { font-family: "Noto Sans", sans-serif !important; letter-spacing: 0 !important; text-transform: none !important; }
+    .metodo h3, .scena .data { font-size: .85rem !important; }
+    .fumetto .sten { font-size: .78rem !important; }
+    .fumetto .reaz { font-family: "Noto Sans", sans-serif !important; }`;
   return `
     :root { --fondo: ${F.fondo} !important; --testo: ${F.testo} !important; --testo-2: ${F.testo2} !important; --linea: ${F.linea} !important;
       --fondo-fonti: ${F.tenue} !important; --accento: ${F.testo} !important; --macchina: ${F.resto} !important;
@@ -46,7 +50,9 @@ function cssSito(articolo, fondo, e) {
       --font: "Noto Sans", sans-serif !important; }
     body { background: ${F.fondo} !important; }
     h1 { ${titoli} text-transform: none !important; }
-    .cifre, .griglia, .cella, table, .stato, .barra-titolo, kbd, .asse text, .segno text, .leg { font-family: "IBM Plex Mono", monospace !important; }
+    .cifre, .griglia, .cella, table, .stato, .asse text, .segno text, .leg { font-variant-numeric: tabular-nums; }
+    .barra-titolo { font-size: .85rem !important; font-weight: 600 !important; letter-spacing: 0 !important; text-transform: none !important; }
+    .tasti button { text-transform: none !important; letter-spacing: 0 !important; }
     .tu { background: ${E.ev}; color: ${E.su} !important; padding: 0 .15em; }
     td.tu { background: none; color: ${F.testo} !important; }
     .confronto .cella.serie-tu { color: ${A.su} !important; }`;

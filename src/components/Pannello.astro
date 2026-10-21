@@ -9,8 +9,8 @@ import { SITO, socialAttivi } from "../config.js";
     <div class="su"><span class="logo">àlea</span><button class="btn chiudi" id="chiudi">chiudi ×</button></div>
     <div class="griglia">
       <div><h4>about</h4><p class="about"><About /></p></div>
-      <div class="col link-mono"><h4>contatti</h4><a href={`mailto:${SITO.email}`}>{SITO.email}</a></div>
-      {socialAttivi().length > 0 && <div class="col link-mono"><h4>social</h4>{socialAttivi().map((s) => <a href={s.url} target="_blank" rel="noopener">{s.nome} ↗</a>)}</div>}
+      <div class="col link-piccoli"><h4>contatti</h4><a href={`mailto:${SITO.email}`}>{SITO.email}</a></div>
+      {socialAttivi().length > 0 && <div class="col link-piccoli"><h4>social</h4>{socialAttivi().map((s) => <a href={s.url} target="_blank" rel="noopener">{s.nome} ↗</a>)}</div>}
       <div class="nl"><b>Un'email quando esce un nuovo articolo.</b><Iscrizione /></div>
     </div>
   </div>
@@ -41,10 +41,10 @@ import { SITO, socialAttivi } from "../config.js";
   .su { display: flex; justify-content: space-between; align-items: flex-start; margin: 28px 0 32px; }
   .chiudi { background: #000; color: var(--acc); }
   .griglia { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 40px; border-top: 2px solid #000; padding-top: 28px; }
-  h4 { font-family: var(--mono); font-weight: 600; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 12px; }
+  h4 { font-weight: 600; font-size: .85rem; margin: 0 0 12px; }
   .about { margin: 0; font-size: 1.25rem; line-height: 1.4; max-width: 40ch; }
   .col { display: flex; flex-direction: column; gap: 8px; }
-  .pannello :global(.link-mono a:hover) { color: #000; text-decoration: underline; }
+  .pannello :global(.link-piccoli a:hover) { color: #000; text-decoration: underline; }
   .pannello :global(.iscr input) { border-color: #000; color: #000; }
   .pannello :global(.iscr input::placeholder) { color: rgba(0,0,0,.55); }
   .pannello :global(.iscr button) { background: #000; color: var(--acc); border-color: #000; }

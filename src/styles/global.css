@@ -5,14 +5,14 @@
   --line: #2a2a28;
   --acc: #d4ff3a;
   --sans: "General Sans", system-ui, sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body { background: var(--bg); color: var(--fg); font-family: var(--sans); }
 a { color: inherit; text-decoration: none; }
 .wrap { max-width: 1280px; margin: 0 auto; padding: 0 16px 80px; }
-.mono { font-family: var(--mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+/* etichette (numero, data, tema): stesso carattere del testo, piccolo; cifre a larghezza fissa così i numeri restano allineati */
+.etichetta { font-size: .85rem; font-weight: 500; font-variant-numeric: tabular-nums; }
 
 /* testata: solo il nome, enorme, a sinistra; il pulsante "more" a destra */
 .testa { display: flex; justify-content: space-between; align-items: flex-start; margin: 28px 0 32px; }
@@ -31,7 +31,7 @@ a { color: inherit; text-decoration: none; }
 h1, h2 { font-weight: 400; letter-spacing: -0.03em; margin: 0; transition: color .2s; }
 .meta { color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
 .meta .n { color: var(--acc); }
-.segnaposto { font-family: var(--mono); font-size: .6rem; letter-spacing: .06em; text-transform: uppercase; border: 1px solid #3a3a38; color: var(--muted); padding: 1px 7px; border-radius: 999px; }
+.segnaposto { font-size: .75rem; border: 1px solid #3a3a38; color: var(--muted); padding: 1px 7px; border-radius: 999px; }
 a.art:hover h1, a.art:hover h2 { color: var(--acc); }
 
 /* ultimo articolo: la stessa figurina verticale della griglia, più grande, e accanto il titolo che occupa il resto.
@@ -48,8 +48,8 @@ a.art:hover h1, a.art:hover h2 { color: var(--acc); }
 .elenco p { color: var(--muted); margin: 0; line-height: 1.45; }
 
 /* about, contatti, social, newsletter */
-.link-mono a, .link-mono span { font-family: var(--mono); font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }
-.link-mono a:hover { color: var(--acc); }
+.link-piccoli a, .link-piccoli span { font-size: .9rem; font-weight: 500; }
+.link-piccoli a:hover { color: var(--acc); }
 .iscr { display: flex; max-width: 460px; width: 100%; }
 .iscr input { flex: 1; min-width: 0; font: inherit; background: transparent; color: var(--fg); border: 1px solid var(--fg); border-right: 0; border-radius: 0; padding: 12px 14px; }
 .iscr button { font: inherit; font-weight: 600; background: var(--acc); color: #000; border: 1px solid var(--acc); border-radius: 0; padding: 12px 20px; cursor: pointer; }
