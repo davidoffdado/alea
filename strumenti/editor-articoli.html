@@ -695,7 +695,7 @@ $("b-pubblica").onclick = () => {
     <li><b>Esporta HTML</b> e salva il file come <code>Desktop/alea/articoli/${ind}.html</code> (anche «Salva progetto» nella stessa cartella, per poterlo modificare dopo).</li>
     <li>In <code>Desktop/alea/src/data/articoli.js</code> aggiungi in cima all'elenco (controlla numero e tema):<pre>${esc(riga)}</pre><button id="copia">copia</button></li>
     <li>Nel terminale, dentro <code>Desktop/alea</code>: <pre>npm run articoli\nnpm run dev</pre> e controlla su <code>localhost:4321/${ind}/</code>.</li>
-    <li>La copertina per la home: una schermata da telefono (vedi <code>scripts/copertine.mjs</code>), oppure chiedi a Claude «fai la copertina di ${ind}».</li>
+    <li>La copertina per la home: un'immagine in <code>public/img/copertine/</code>, con il nome del file nel campo <code>copertina</code> di <code>src/data/articoli.js</code>.</li>
     <li>Pubblica con <code>npm run deploy</code>.</li></ol>
     <button onclick="this.closest('dialog').close()">Chiudi</button>`;
   d.querySelector("#copia").onclick = () => navigator.clipboard.writeText(riga);

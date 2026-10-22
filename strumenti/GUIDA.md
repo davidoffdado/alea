@@ -87,7 +87,7 @@ Nell'anteprima la schermata iniziale si vede solo se spunti **mostra la schermat
    npm run articoli    # aggiunge l'articolo al sito con testata, firma, fondo e meta tag
    npm run dev         # controlla su localhost:4321/<indirizzo>/
    ```
-5. Fai la copertina per la home (vedi `scripts/copertine.mjs`), oppure chiedi a Claude: «fai la copertina di <indirizzo>».
+5. Metti la copertina per la home in `public/img/copertine/` e scrivi il nome del file nel campo `copertina` di `src/data/articoli.js`.
 6. Quando è tutto a posto: `npm run deploy`. Poi `git add articoli src && git commit -m "…" && git push`, così non si perde niente.
 
 ## 6. Le cose complesse (con Claude)

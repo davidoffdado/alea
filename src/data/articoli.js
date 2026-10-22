@@ -1,6 +1,7 @@
-// Elenco degli articoli, dal più recente. Le pagine degli articoli si importano in public/ con npm run articoli.
-// copertina: nome dell'immagine in public/img/copertine/<nome>.png, un ritaglio 4:5 dell'articolo visto da telefono
-//   (npm run copertine, vedi scripts/copertine.mjs); per le bozze basta { colore, testo }.
+// Elenco degli articoli, dal più recente. Con npm run deploy tutto quello che c'è qui (titolo, sommario, url, copertina)
+// si aggiorna ovunque: home, pagine degli articoli, meta tag e anteprime per i social.
+// copertina: nome del file in public/img/copertine/ (png, jpg o webp), mostrato così com'è in un riquadro 4:5
+//   (se ha altre proporzioni si vede il centro); per le bozze basta { colore, testo }.
 // colore: il blocco di colore pieno dietro la copertina ("ombra piena").
 // bozza: true -> compare solo con npm run dev, mai nel sito pubblicato
 export const ARTICOLI = [
@@ -9,19 +10,19 @@ export const ARTICOLI = [
     data: "2026-10-22",
     tema: "cultura",
     titolo: "La rete di Infinite Jest",
-    sommario: "Il monumentale romanzo di David Foster Wallace visto come un sistema complesso",
+    sommario: "Il romanzo di David Foster Wallace, visto attraverso una network analysis, ci mostra due mondi separati, se non per un personaggio",
     url: "/la-rete-di-infinite-jest/",
-    copertina: "infinite-jest",
+    copertina: "infinite-jest.png",
     colore: "#d4ff3a",
   },
   {
     numero: 2,
     data: "2026-10-10",
-    tema: "statistica",
+    tema: "probabilità",
     titolo: "Non siamo bravi a simulare la casualità",
-    sommario: "Inventa cento lanci di moneta: un programma che non sa niente di te proverà a prevederli. Poi li confrontiamo con una moneta vera.",
-    url: "/prova-a-fare-il-caso/",
-    copertina: "moneta",
+    sommario: "Generare numeri casuali non è qualcosa di semplice e spesso un essere umano fallisce nel tentativo di provarci",
+    url: "/simulazione-casualita/",
+    copertina: "moneta.png",
     colore: "#d4ff3a",
   },
   {
@@ -29,9 +30,9 @@ export const ARTICOLI = [
     data: "2026-10-06",
     tema: "politica",
     titolo: "I litigi tra gli alleati di governo",
-    sommario: "Governano insieme e votano insieme la fiducia, ma in aula si contestano: 1.047 volte, alla Camera, dal 1948 al 2022.",
+    sommario: "Governano insieme e votano insieme la fiducia, ma in aula si contestano: 1.047 volte alla Camera, dal 1948 al 2022",
     url: "/litigi-tra-alleati/",
-    copertina: "litigi",
+    copertina: "litigi2.png",
     colore: "#d4ff3a",
   },
   // segnaposto per vedere la griglia mentre si lavora

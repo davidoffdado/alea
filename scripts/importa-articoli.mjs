@@ -13,7 +13,7 @@ import { CSS_TEMA, FONT_TEMA, TESTI_TEMA } from "./tema.mjs";
 
 const ARTICOLI = [
   {
-    cartella: "prova-a-fare-il-caso",
+    cartella: "simulazione-casualita",
     sorgente: "../moneta",                          // pagina unica, senza file esterni
     pagina: "moneta.html",
     risorse: [],

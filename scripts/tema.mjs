@@ -32,7 +32,7 @@ export const CSS_TEMA = {
   .metodo h3, .scena .data { font-size: .85rem !important; }
   .fumetto .sten { font-size: .78rem !important; }
   .fumetto .reaz { font-family: "Noto Sans", sans-serif !important; }`,
-  "prova-a-fare-il-caso": `
+  "simulazione-casualita": `
   ${RADICE} { color-scheme: light !important; --fondo: ${T.fondo} !important; --testo: ${T.testo} !important; --testo-2: ${T.testo2} !important;
     --linea: ${T.linea} !important; --fondo-fonti: ${T.tenue} !important; --accento: ${T.testo} !important; --macchina: ${T.resto} !important;
     --macchina-soft: ${T.resto}40 !important; --tu: ${T.dato} !important; --tu-testo: ${T.testo} !important;
@@ -51,7 +51,7 @@ export const CSS_TEMA = {
 
 // testi che vanno aggiornati (vecchi colori, etichette da macchina da scrivere): [cerca, sostituisci]
 export const TESTI_TEMA = {
-  "prova-a-fare-il-caso": [
+  "simulazione-casualita": [
     ["la linea rossa", "la linea nera"],
     ["Tavola 1 · Cento lanci inventati", "Tavola 1 - Cento lanci inventati"],
     ['lancio <b class="tu" id="conta">000</b>/100', 'Lancio <b class="tu" id="conta">0</b> di 100'],

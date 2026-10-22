@@ -1,10 +1,9 @@
 ---
-// Copertina di un articolo: un ritaglio verticale (4:5) dell'articolo visto da telefono, con dietro un blocco
+// Copertina di un articolo: un'immagine in un riquadro verticale (4:5), con dietro un blocco
 // di colore pieno spostato in basso a destra ("ombra piena") e il numero dell'articolo su un'etichetta lime.
-// Le immagini si generano con npm run copertine (vedi scripts/copertine.mjs).
 // Stessa figurina per l'ultimo articolo (più grande) e per la griglia.
 // Al passaggio del mouse la schermata scivola verso l'ombra, come un tasto premuto.
-//   copertina: "litigi" -> public/img/copertine/litigi.png; oppure { colore, testo } per le bozze (copertina tipografica)
+//   copertina: "litigi.png" -> public/img/copertine/litigi.png; oppure { colore, testo } per le bozze (copertina tipografica)
 //   colore:    colore dell'ombra
 //   numero:    numero dell'articolo, sull'etichetta
 import { url } from "../config.js";
@@ -13,7 +12,7 @@ const { copertina, colore = "#f2f0ea", numero, apertura = false, titolo = "" } =
 <div class:list={["cop", { grande: apertura }]} style={`--ombra: ${colore}`}>
   <div class="cop-in">
     {typeof copertina === "string" ? (
-      <img src={url(`img/copertine/${copertina}.png`)} alt={titolo} loading={apertura ? "eager" : "lazy"} />
+      <img src={url(`img/copertine/${copertina}`)} alt={titolo} loading={apertura ? "eager" : "lazy"} />
     ) : (
       <div class="c-tipo" style={`background: ${copertina.colore}`}><span>{copertina.testo}</span></div>
     )}
@@ -28,7 +27,7 @@ const { copertina, colore = "#f2f0ea", numero, apertura = false, titolo = "" } =
   .cop::before { content: ""; position: absolute; inset: var(--sp) calc(-1 * var(--sp)) calc(-1 * var(--sp)) var(--sp); background: var(--ombra); }
   .cop-in { position: absolute; inset: 0; overflow: hidden; background: #f9f9f7; transition: transform .25s ease; }
   :global(a.art:hover) .cop-in { transform: translate(calc(var(--sp) / 2), calc(var(--sp) / 2)); }
-  img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
   /* il numero dell'articolo, su un'etichetta lime che sporge a sinistra */
   .num { position: absolute; left: -6px; bottom: 22px; background: #d4ff3a; color: #000; font-weight: 700; font-size: 2.6rem;

@@ -12,7 +12,7 @@ const temi = {}; vm.createContext(temi);
 vm.runInContext(readFileSync(resolve(qui, "../temi.js"), "utf8") + ";this.T={COMBO,cssSito,FONT_TEMA};", temi);
 const { COMBO, cssSito, FONT_TEMA } = temi.T;
 const SITO = resolve(qui, "../../../../public");   // Desktop/alea/public
-const ARTICOLI = { litigi: "litigi-tra-alleati", moneta: "prova-a-fare-il-caso" };
+const ARTICOLI = { litigi: "litigi-tra-alleati", moneta: "simulazione-casualita" };
 
 for (const [fondo, ev] of COMBO) {
   const cartella = resolve(qui, "pagine", `${fondo}-${ev}`);

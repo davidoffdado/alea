@@ -1,8 +1,0 @@
-<!doctype html>
-<!-- "Telefono" senza server per le schermate delle copertine: carica ?p= (indirizzo file:// di una pagina in public/)
-     in un riquadro largo 390px e alto ?h=. Edge headless non scende sotto ~500px di finestra, per questo l'iframe:
-     la schermata (finestra 500px, densità 2) ha il telefono a sinistra, come vuole ritaglio.html.
-     Edge va lanciato con --allow-file-access-from-files. -->
-<style>html,body{margin:0;background:#fff;overflow:hidden}iframe{display:block;width:390px;border:0}</style>
-<iframe id="f"></iframe>
-<script>const q = new URLSearchParams(location.search), f = document.getElementById("f"); f.style.height = (q.get("h") || 844) + "px"; f.src = q.get("p");</script>

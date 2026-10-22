@@ -1,6 +1,6 @@
 <!doctype html>
-<!-- Immagine di anteprima per i social (1200x630): la figurina della home (public/img/copertine/moneta.png con l'ombra piena)
-     a sinistra, il titolo e àlea a destra. Si rigenera con npm run copertine e poi npm run og -->
+<!-- Modello dell'immagine di anteprima di un articolo per i social (1200x630): la figurina della home (copertina con l'ombra piena)
+     a sinistra, il titolo e àlea a destra. Copertina, numero e titolo li mette scripts/og.mjs, da src/data/articoli.js. -->
 <html lang="it">
 <head>
 <meta charset="utf-8">
@@ -8,15 +8,15 @@
 <style>
   html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #000; font-family: "General Sans", sans-serif; color: #f2f0ea; }
   .cop { position: absolute; left: 56px; top: 56px; width: 440px; height: 550px; box-sizing: border-box;
-         box-shadow: 22px 22px 0 #d4ff3a; background: #fff url(../../public/img/copertine/moneta.png) top / cover; }
+         box-shadow: 22px 22px 0 {{colore}}; background: #fff url({{copertina}}) center / cover; }
   .num { position: absolute; left: 46px; top: 520px; background: #d4ff3a; color: #000; font-weight: 700; font-size: 64px; letter-spacing: -0.06em; line-height: 1; padding: 4px 16px 0 12px; }
   .destra { position: absolute; left: 571px; right: 56px; top: 56px; bottom: 56px; display: flex; flex-direction: column; justify-content: space-between; }
-  .tit { font-size: 74px; line-height: .98; letter-spacing: -0.04em; }
+  .tit { font-size: 74px; line-height: .98; letter-spacing: -0.04em; text-wrap: balance; }
   .logo { font-weight: 700; font-size: 96px; letter-spacing: -0.075em; color: #d4ff3a; line-height: .8; }
 </style>
 </head>
 <body>
-  <div class="cop"></div><div class="num">02</div>
-  <div class="destra"><div class="tit">Non siamo bravi a simulare la casualità</div><div class="logo">àlea</div></div>
+  <div class="cop"></div><div class="num">{{numero}}</div>
+  <div class="destra"><div class="tit">{{titolo}}</div><div class="logo">àlea</div></div>
 </body>
 </html>
