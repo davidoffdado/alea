@@ -5,6 +5,16 @@
 // bozza: true -> compare solo con npm run dev, mai nel sito pubblicato
 export const ARTICOLI = [
   {
+    numero: 3,
+    data: "2026-10-22",
+    tema: "cultura",
+    titolo: "La rete di Infinite Jest",
+    sommario: "Il monumentale romanzo di David Foster Wallace visto come un sistema complesso",
+    url: "/la-rete-di-infinite-jest/",
+    copertina: "infinite-jest",
+    colore: "#d4ff3a",
+  },
+  {
     numero: 2,
     data: "2026-10-10",
     tema: "statistica",

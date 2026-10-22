@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  Pagina di àlea su Infinite Jest. Struttura:
+    1. apertura (titolo, l'unico incontro tra Hal e Gately)
+    2. la striscia: il romanzo in blocchi da 100 parole, colorati per mondo
+    3. la rete grande, a scorrimento: il grafico resta fermo e cambia a ogni passo del testo; l'ultimo passo la lascia esplorare
+    4. le note
+    5. come è fatto
+  I dati stanno in dati.js (DATI), generato da script/06_rete_verificata.py.
+-->
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="dati.js"></script>
+<style>
+  :root {
+    --fondo: #ffffff; --testo: #111111; --testo-2: #5e5d58; --linea: #e0e0db; --tenue: #f2f2ef;
+    --ev: #d4ff3a;          /* evidenziatore di àlea */
+    --eta: #111111;         /* E.T.A. e famiglia Incandenza */
+    --ennet: #9b9a94;       /* Ennet House */
+    --altro: #d9d8d3;       /* tutti gli altri */
+    --filo: #c9c8c2;        /* i legami a riposo */
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fondo); color: var(--testo); }
+  body { font: 17px/1.65 "Noto Sans", system-ui, sans-serif; font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+  .col { max-width: 660px; margin: 0 auto; padding: 0 16px; }
+  .largo { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+  h1, h2 { font-family: "General Sans", system-ui, sans-serif; font-weight: 600; letter-spacing: -.04em; line-height: 1.02; }
+  h1 { font-size: clamp(2.6rem, 8vw, 5rem); margin: 56px 0 20px; max-width: 13ch; }
+  h2 { font-size: clamp(1.7rem, 4.5vw, 2.4rem); margin: 72px 0 16px; }
+  .occhiello, .etichetta, .mono { font-family: "Noto Sans", system-ui, sans-serif; }
+  .occhiello { font-size: .85rem; font-weight: 600; color: var(--testo-2); margin-top: 48px; }
+  .sommario { font-size: 1.25rem; line-height: 1.45; color: var(--testo-2); margin: 0 0 32px; }
+  p { margin: 0 0 1.1em; }
+  mark { background: var(--ev); color: #000; padding: 0 .12em; }
+  /* evidenziatori con i colori della striscia e della rete, per spiegare la legenda dentro il testo */
+  mark.eta { background: var(--eta); color: #fff; } mark.ennet { background: var(--ennet); color: #000; }
+  mark.altro { background: var(--altro); color: #000; } mark.ponte { outline: 1px solid #000; outline-offset: -1px; }
+  a { color: inherit; text-decoration: underline; text-decoration-color: var(--ev); text-decoration-thickness: 3px; text-underline-offset: 3px; }
+  a:hover { background: var(--ev); color: #000; }
+  blockquote { margin: 32px 0; padding: 0 0 0 20px; border-left: 4px solid var(--ev); font-size: 1.3rem; line-height: 1.45; font-family: "General Sans", sans-serif; letter-spacing: -.01em; }
+  blockquote cite { display: block; margin-top: 10px; font: .78rem/1.4 "Noto Sans", sans-serif; color: var(--testo-2); font-style: normal; }
+  /* i nomi dei mondi nel testo portano un quadratino del loro colore: il colore non è mai l'unico segnale */
+  .m { white-space: nowrap; }
+  .m::before { content: ""; display: inline-block; width: .62em; height: .62em; margin: 0 .3em .05em 0; border-radius: 2px; vertical-align: middle; }
+  .m.eta::before { background: var(--eta); } .m.ennet::before { background: var(--ennet); }
+  .m.altro::before { background: var(--altro); } .m.ponte::before { background: var(--ev); outline: 1px solid #000; }
+  .nota-piccola { font-size: .85rem; color: var(--testo-2); }
+
+  /* ---------- la striscia ---------- */
+  .striscia-box { margin: 28px auto 8px; position: relative; }
+  .legenda { display: flex; flex-wrap: wrap; gap: 6px 18px; font: .78rem/1.3 "Noto Sans", sans-serif; color: var(--testo-2); margin: 0 0 12px; }
+  .legenda span { display: inline-flex; align-items: center; gap: 6px; }
+  .legenda i { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+  #striscia { display: block; width: 100%; cursor: crosshair; touch-action: pan-y; }
+  .asse-striscia { display: flex; justify-content: space-between; font: .72rem "Noto Sans", sans-serif; color: var(--testo-2); margin-top: 6px; }
+
+  /* ---------- tooltip comune ---------- */
+  .tip { position: fixed; z-index: 50; pointer-events: none; background: #fff; border: 1px solid #000; padding: 8px 10px; font: .8rem/1.45 "Noto Sans", sans-serif;
+    max-width: 280px; box-shadow: 4px 4px 0 var(--ev); opacity: 0; transition: opacity .12s; }
+  .tip b { font-family: "General Sans", sans-serif; font-weight: 600; font-size: .95rem; }
+  .tip .mono { font-size: .72rem; color: var(--testo-2); }
+
+  /* ---------- la rete a scorrimento ---------- */
+  .scorri { position: relative; margin-top: 48px; }
+  .scena-rete { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
+  #rete { display: block; width: 100%; height: 100%; }
+  .passi { position: relative; z-index: 2; margin-top: -100vh; margin-top: -100svh; pointer-events: none; }
+  .passo { min-height: 100vh; display: flex; align-items: center; padding: 0 16px; }
+  .passo .carta { pointer-events: auto; max-width: 360px; background: rgba(255,255,255,.94); border: 1px solid var(--testo); padding: 16px 18px; font-size: 1rem; line-height: 1.55; }
+  .passo .carta p:last-child { margin-bottom: 0; }
+  .passo .numero { font: 600 2.6rem/1 "General Sans", sans-serif; letter-spacing: -.05em; display: block; margin-bottom: 8px; }
+  .passo:first-child { align-items: flex-end; padding-bottom: 12vh; }
+  .passo.ultimo { min-height: 60vh; }
+  @media (min-width: 900px) { .passo { padding-left: max(24px, calc((100vw - 1240px) / 2)); } }
+  @media (max-width: 899px) { .passo { align-items: flex-end; padding-bottom: 8vh; } .passo .carta { max-width: none; width: 100%; } }
+
+  #rete .filo { stroke: var(--filo); stroke-linecap: round; transition: stroke .5s, stroke-opacity .5s, stroke-width .5s; }
+  #rete .nodo { stroke: #fff; stroke-width: 1.5; transition: fill .5s, opacity .5s, r .5s, stroke .3s; cursor: pointer; }
+  #rete .nome { font: 600 11px "General Sans", sans-serif; fill: var(--testo); paint-order: stroke; stroke: #fff; stroke-width: 3.5px; stroke-linejoin: round;
+    pointer-events: none; transition: opacity .4s; }
+  #rete .nome.grande { font-size: 13.5px; }
+  .cerca { position: absolute; z-index: 3; top: 16px; right: 16px; display: none; gap: 0; }
+  .cerca.on { display: flex; }
+  .cerca input { font: .85rem "Noto Sans", sans-serif; border: 1px solid #000; border-radius: 0; padding: 8px 10px; width: 210px; background: #fff; }
+  .cerca button { font: 600 .8rem "Noto Sans", sans-serif; border: 1px solid #000; border-left: 0; background: var(--ev); padding: 8px 10px; cursor: pointer; border-radius: 0; }
+  .legenda-rete { position: absolute; z-index: 3; left: 16px; top: 16px; background: rgba(255,255,255,.9); padding: 6px 8px; }
+  @media (max-width: 899px) { .legenda-rete { top: 10px; left: 10px; right: 10px; } .cerca { top: 52px; left: 10px; right: auto; } .cerca input { width: 170px; } }
+
+  /* ---------- note ---------- */
+  .barre { margin: 24px 0 8px; }
+  .barre .riga { display: grid; grid-template-columns: 150px 1fr 48px; align-items: center; gap: 10px; font-size: .85rem; height: 26px; }
+  .barre .riga .n { text-align: right; font-family: "Noto Sans", sans-serif; font-size: .78rem; }
+  .barre .barra { height: 14px; background: var(--ennet); border-radius: 0 4px 4px 0; }
+  .barre .barra.eta { background: var(--eta); } .barre .barra.altro { background: var(--altro); }
+  .barre .riga.top .nomeb { font-weight: 600; }
+  .barre .scala { position: relative; height: 1px; background: var(--linea); }
+  @media (max-width: 520px) { .barre .riga { grid-template-columns: 112px 1fr 42px; font-size: .78rem; } }
+  table.dati { width: 100%; border-collapse: collapse; font-size: .8rem; margin: 8px 0 24px; }
+  table.dati th, table.dati td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--linea); }
+  table.dati td.n { text-align: right; font-family: "Noto Sans", sans-serif; }
+  details summary { cursor: pointer; font: .8rem "Noto Sans", sans-serif; color: var(--testo-2); }
+
+  .pile { margin: 20px 0 28px; }
+  .pile .riga { display: grid; grid-template-columns: 76px 1fr; gap: 10px; align-items: center; margin-bottom: 8px; font: .78rem "Noto Sans", sans-serif; }
+  .pile .barra { display: flex; height: 30px; gap: 2px; }
+  .pile .pezzo { display: flex; align-items: center; padding-left: 6px; font: 600 .78rem "Noto Sans", sans-serif; overflow: hidden; white-space: nowrap; }
+  .pile .pezzo.eta { background: var(--eta); color: #fff; } .pile .pezzo.ennet { background: var(--ennet); color: #000; } .pile .pezzo.altro { background: var(--altro); color: #000; }
+  .metodo { background: var(--tenue); margin-top: 80px; padding: 8px 0 56px; font-size: .92rem; }
+  .metodo h2 { font-size: 1.5rem; }
+  .fine { height: 64px; }
+  /* ?passo=...&solo: solo la rete, a tutto schermo, con la carta del passo sopra (per schermate e caroselli) */
+  body.solo > header, body.solo main > section, body.solo .largo, body.solo .fine { display: none; }
+  body.solo .scorri { margin: 0; }
+  body.solo .passi { position: absolute; inset: 0; margin: 0; }
+  body.solo .passo { display: none; }
+  body.solo .passo.attivo { display: flex; height: 100vh; min-height: 0; }
+  /* ?ig=<grafico>: un grafico solo, a tutto schermo, per le slide di Instagram (instagram/genera.sh, 540×675 a densità 2 = 1080×1350) */
+  body.ig { height: 100vh; overflow: hidden; }
+  body.ig * { transition: none !important; }
+  body.ig > header, body.ig main > *, body.ig .fine, body.ig .passi, body.ig .cerca { display: none !important; }
+  body.ig .legenda { font-size: .85rem; font-weight: 500; color: var(--testo); }
+  body.ig-rete .scorri { display: block !important; margin: 0; }
+  body.ig-rete .legenda-rete { top: 24px; left: 24px; right: auto; }
+  body.ig-rete-spie .legenda-rete, body.ig-rete-halgately .legenda-rete { display: none; }   /* lì i colori non sono i mondi */
+  body.ig-striscia .largo { display: block !important; padding: 28px; }
+  body.ig-striscia .striscia-box { margin: 0; }
+  .ig-solo { display: none; }
+  body.ig-pile #sez-note, body.ig-barre #sez-note { display: flex !important; flex-direction: column; justify-content: center; height: 100vh; padding: 28px; max-width: none; }
+  body.ig-pile #sez-note > :not(.pile, .ig-solo), body.ig-barre #sez-note > :not(.barre, .nota-piccola, .ig-solo) { display: none; }
+  body.ig #sez-note .ig-solo { display: flex; margin-bottom: 20px; }
+  body.ig .pile .riga { font-size: .95rem; grid-template-columns: 1fr; gap: 6px; margin-bottom: 22px; } body.ig .pile .barra { height: 150px; }
+  body.ig .pile .pezzo { font-size: .9rem; align-items: flex-start; padding-top: 8px; white-space: normal; line-height: 1.2; }
+  body.ig .barre .riga { height: 38px; font-size: .95rem; }
+</style>
+
+<meta name="description" content="Il monumentale romanzo di David Foster Wallace visto come un sistema complesso">
+<link rel="canonical" href="https://alea.news/la-rete-di-infinite-jest/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="àlea">
+<meta property="og:title" content="La rete di Infinite Jest">
+<meta property="og:description" content="Il monumentale romanzo di David Foster Wallace visto come un sistema complesso">
+<meta property="og:url" content="https://alea.news/la-rete-di-infinite-jest/">
+<meta property="og:image" content="https://alea.news/og/la-rete-di-infinite-jest.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="it_IT">
+<meta property="article:published_time" content="2026-10-22">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="La rete di Infinite Jest">
+<meta name="twitter:description" content="Il monumentale romanzo di David Foster Wallace visto come un sistema complesso">
+<meta name="twitter:image" content="https://alea.news/og/la-rete-di-infinite-jest.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>La rete di Infinite Jest · àlea</title>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,600,700&display=swap" rel="stylesheet">
+<style>
+  .alea-testa { display: flex; justify-content: center; background: #000; padding: 14px 16px 12px; position: relative; z-index: 30; }
+  .alea-logo { font-family: "General Sans", system-ui, sans-serif; font-weight: 700; font-size: 52px; letter-spacing: -0.07em; line-height: .9; color: #f2f0ea; text-decoration: none; }
+  .alea-logo:hover { color: #d4ff3a; }
+  .alea-firma { font-family: "Noto Sans", sans-serif; font-size: .9rem; color: #898781; margin: -12px 0 24px; }
+  .alea-firma a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+  .alea-firma a:hover { color: #000; background: #d4ff3a; }
+
+  .alea-fondo { background: #000; color: #f2f0ea; font-family: "General Sans", system-ui, sans-serif; padding: 0 16px 64px; }
+  .alea-fondo * { box-sizing: border-box; }
+  .alea-fondo a { color: inherit; text-decoration: none; }
+  .alea-fondo-in { max-width: 1280px; margin: 0 auto; border-top: 1px solid #2a2a28; }
+  .alea-invito { display: block; padding: 72px 0 56px; font-weight: 400; font-size: clamp(2.4rem, 6vw, 5rem); line-height: 1; letter-spacing: -0.035em; max-width: 18ch; }
+  .alea-invito b { font-weight: 700; letter-spacing: -0.07em; }
+  .alea-invito:hover, .alea-invito:hover b { color: #d4ff3a; }
+  .alea-altri { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px 20px; margin: -16px 0 48px; }
+  .alea-altri a { display: flex; flex-direction: column; gap: 8px; }
+  .alea-altri .t { font-size: 1.5rem; line-height: 1.08; letter-spacing: -0.03em; }
+  .alea-altri .s { color: #8b8880; line-height: 1.45; }
+  .alea-altri a:hover .t { color: #d4ff3a; }
+  .alea-barra { background: #d4ff3a; color: #000; padding: 12px 16px; font-weight: 600; font-size: .95rem; }
+  .alea-nl { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: end; padding: 24px 0 8px; }
+  .alea-nl h3 { font-weight: 400; font-size: clamp(1.8rem, 3.5vw, 2.8rem); line-height: 1.05; letter-spacing: -0.03em; margin: 0; }
+  .alea-nl p { color: #8b8880; margin: 10px 0 0; }
+  .alea-iscr { display: flex; max-width: 460px; width: 100%; }
+  .alea-iscr input { flex: 1; min-width: 0; font: inherit; background: transparent; color: #f2f0ea; border: 1px solid #f2f0ea; border-right: 0; border-radius: 0; padding: 12px 14px; }
+  .alea-iscr button { font: inherit; font-weight: 600; background: #d4ff3a; color: #000; border: 1px solid #d4ff3a; border-radius: 0; padding: 12px 20px; cursor: pointer; }
+  .alea-iscr button:hover { background: #f2f0ea; border-color: #f2f0ea; }
+  .alea-piede { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 28px; border-top: 1px solid #2a2a28; margin-top: 64px; padding-top: 28px; }
+  .alea-piede h4 { font-weight: 600; font-size: .85rem; color: #8b8880; margin: 0 0 12px; }
+  .alea-piede p { margin: 0; line-height: 1.5; color: #cfccc4; max-width: 46ch; }
+  .alea-piede p a { text-decoration: underline; text-underline-offset: 3px; }
+  .alea-col { display: flex; flex-direction: column; gap: 8px; }
+  .alea-col a { font-size: .9rem; font-weight: 500; }
+  .alea-col a:hover { color: #d4ff3a; }
+  @media (max-width: 860px) { .alea-nl, .alea-piede, .alea-altri { grid-template-columns: 1fr; } }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style id="alea-tema">
+</style>
+</head>
+<body>
+<header class="alea-testa"><a class="alea-logo" href="/">àlea</a></header>
+
+<!-- ============ 1. APERTURA ============ -->
+<header class="col">
+  <div class="occhiello">Cultura - Network analysis</div>
+  <h1>La rete di Infinite Jest</h1>
+  <p class="sommario">Il monumentale romanzo di David Foster Wallace visto come un sistema complesso</p>
+  <p class="alea-firma">di <a href="https://www.davidruffini.com" target="_blank" rel="noopener">David Ruffini</a>, 22 ottobre 2026</p>
+</header>
+
+<main>
+<section class="col">
+  <p>Nel 1996 viene pubblicata <strong><i>Infinite Jest</i></strong>, l'opera di <mark><strong>David Foster Wallace</strong></mark>, che approfondendo diverse tematiche, dallo stile di vita dell'americano medio (affrontato usando la metafora del tennis) alla pubblicità, passando per la tossicodipendenza, la violenza, gli abusi sui minori e l'abuso di sostanze, <strong>si attesta come uno dei capolavori della letteratura postmoderna</strong>.</p>
+  <p>Al centro della vicenda c'è un film, o meglio, una cartuccia, prodotta da <i>James Orin Incandenza</i>, chiamata <mark>Infinite Jest</mark>, la quale, <strong>se vista, rende impossibile proseguire la vita come prima</strong>, poiché si diventa inermi di fronte alla vita stessa, con l'unico obiettivo di continuare a guardare quella cassetta, lasciandosi morire. <strong>Attorno alla pellicola ruotano infinite vicende, narrate da diversi personaggi, producendo una trama non lineare</strong> e un flusso quasi casuale di racconti, intrecciati o no tra di loro.</p>
+  <p><i>James Orin Incandenza</i>, chiamato anche <i>Lui in Persona</i>, oltre a essere il regista della pellicola maledetta è anche uno scienziato e un ex tennista, fondatore della <strong>Enfield Tennis Academy</strong>, uno dei luoghi principali dell'opera, insieme alla <strong>Ennet House</strong>, una casa di recupero ai piedi della collina su cui sorge l'accademia.</p>
+  <p>Nel primo capitolo di <i>Infinite Jest</i> <i>Hal Incandenza</i>, figlio di James, diciassette anni, promessa del tennis e iscritto all'E.T.A., sta crollando (a dir poco) durante un colloquio di ammissione all'università. Tra i pensieri che gli attraversano la testa ce n'è uno che è <strong>temporalmente posizionato alla fine delle vicende narrate nel libro</strong>:</p>
+  <blockquote>«Rivedo John N.R. Wayne […] fare il palo, mascherato, mentre Donald Gately e io dissotterriamo la testa di mio padre.»
+    <cite>Hal Incandenza, <i>Infinite Jest</i>, «Anno di Glad», traduzione di Edoardo Nesi</cite></blockquote>
+  <p><i>Don Gately</i> è l'altro protagonista del libro: un ex ladro ed ex tossicodipendente che lavora alla Ennet House. Il romanzo segue le vite di <i>Hal</i> e <i>Gately</i>, ma anche quelle degli altri personaggi per più di mille pagine, non raccontando più nulla sullo scavo di cui parla Hal. <strong>Ufficialmente i due non si incontrano mai</strong>, ma quel che avviene nell'<i>anno mancante</i>, cioè il periodo tra la fine della narrazione e l'inizio del primo capitolo, ci lascia pensare che <strong>forse i due abbiano interagito fuori dalle pagine del romanzo</strong>.</p>
+  <p>Durante la lettura del romanzo ho notato come i soggetti fossero molti, le storie apparentemente sconclusionate e i piani temporali intervallati. Sforzandomi di trovare un nesso tra le storie, ho realizzato quanto <i>Infinite Jest</i> sembrasse un <strong>sistema complesso</strong>, un insieme di molteplici componenti interdipendenti e in continua interazione tra loro senza un controllo centrale. La domanda è venuta spontanea: <strong>perché non provare ad approcciare il romanzo con gli strumenti dei sistemi complessi, perché non costruire la <mark>rete dei personaggi</mark> di <i>Infinite Jest</i>?</strong></p>
+  <p>Partendo dall'<a href="https://www.einaudi.it/catalogo-libri/narrativa-straniera/narrativa-di-lingua-inglese/infinite-jest-david-foster-wallace-9788806232474/">edizione</a> di Einaudi del 2016, tradotta da Edoardo Nesi, <strong>ho diviso il testo in blocchi di 100 parole e considerato un'interazione tra personaggi se questi condividono un blocco almeno due volte nell'intero libro</strong>: più blocchi sono stati condivisi e più era forte il legame tra i due. Nel caso di personaggi che hanno condiviso un solo blocco, ho controllato a mano se ci fosse effettivamente stato un incontro o se la condivisione del blocco era dovuta alla struttura del testo (fine e inizio di un paragrafo) o a una citazione. Quello che vedi sotto è il romanzo diviso in blocchi da 100 parole.</p>
+</section>
+
+<!-- ============ 2. LA STRISCIA ============ -->
+<div class="largo">
+  <div class="striscia-box" id="striscia-box">
+    <div class="legenda">
+      <span><i style="background:var(--eta)"></i>E.T.A. e Incandenza</span>
+      <span><i style="background:var(--ennet)"></i>Ennet House</span>
+      <span><i style="background:var(--ev);outline:1px solid #000"></i>entrambi i mondi, insieme</span>
+      <span><i style="background:var(--altro)"></i>solo altri personaggi</span>
+      <span><i style="background:var(--tenue)"></i>nessun nome</span>
+    </div>
+    <canvas id="striscia" role="img" aria-label="Il romanzo diviso in blocchi da cento parole, colorati in base al mondo dei personaggi nominati"></canvas>
+    <div class="asse-striscia"><span>prima pagina</span><span>ultima pagina</span></div>
+  </div>
+</div>
+<section class="col">
+  <p class="nota-piccola">Passa sopra la striscia per vedere chi compare in ogni blocco.</p>
+  <p>I blocchi <mark class="eta">neri</mark> sono quelli in cui si parla dell'E.T.A. e di Hal, quelli <mark class="ennet">grigi</mark> invece vedono protagonista la Ennet House, quelli <mark class="ponte">lime</mark> raccolgono entrambi i mondi e, infine, i blocchi di colore <mark class="altro">grigio chiaro</mark> rappresentano le parti dove sono presenti personaggi secondari o non ci sono affatto personaggi. <strong>Gli ambienti dell'E.T.A. e della Ennet House si alternano in lunghe sequenze, quasi senza mescolarsi</strong>, tanto che i blocchi in cui un personaggio dell'accademia e uno della Ennet House compaiono insieme sono <strong><span id="n-entrambi">111</span> su <span id="n-blocchi">5.326</span>: solamente il <span id="q-entrambi">2,1%</span> del romanzo</strong>, concentrati quasi tutti intorno alla stessa persona.</p>
+  <p><strong>Joelle van Dyne</strong>, ex fidanzata di Orin Incandenza (figlio di James Orin Incandenza), attrice dei film di Lui in Persona e voce radiofonica di <i>«Madame Psychosis»</i>, viene ascoltata ogni notte da Mario Incandenza. Nel corso del romanzo finirà alla Ennet House e <strong>fa da collante tra i due mondi, essendo presente nell'<span id="q-joelle-testo">85%</span> dei blocchi che le due realtà condividono</strong>.</p>
+  <p>Possiamo distinguere <strong>due grosse galassie</strong> nell'opera di David Foster Wallace: una legata all'accademia tennistica e una alla casa di recupero per tossicodipendenti. Attraverso una rete, dove <strong>ogni nodo è un personaggio che cambia dimensione secondo il numero di collegamenti che questo ha con gli altri personaggi</strong>, è possibile rappresentare il network dei personaggi di <i>Infinite Jest</i> e apprezzare visivamente la divisione delle ambientazioni principali. Anche in questo caso il colore <mark class="eta">nero</mark> rappresenta l'E.T.A., il <mark class="ennet">grigio scuro</mark> la Ennet House e il <mark class="altro">grigio chiaro</mark> altre ambientazioni, mentre <strong>la forza di un legame, ossia quante interazioni hanno due personaggi, viene rappresentata dallo spessore dell'arco che li collega</strong>.</p>
+</section>
+
+<!-- ============ 3. LA RETE ============ -->
+<div class="scorri" id="scorri">
+  <div class="scena-rete">
+    <div class="legenda legenda-rete" id="legenda-rete">
+      <span><i style="background:var(--eta)"></i>E.T.A. e Incandenza</span>
+      <span><i style="background:var(--ennet)"></i>Ennet House</span>
+      <span><i style="background:var(--altro)"></i>altri</span>
+    </div>
+    <form class="cerca" id="cerca" autocomplete="off">
+      <input id="cerca-in" list="elenco-nomi" placeholder="cerca un personaggio" aria-label="Cerca un personaggio">
+      <datalist id="elenco-nomi"></datalist>
+      <button type="submit">Vai</button>
+    </form>
+    <svg id="rete" role="img" aria-label="La rete dei personaggi di Infinite Jest"></svg>
+  </div>
+  <div class="passi">
+    <div class="passo" data-passo="tutti"><div class="carta">
+      <span class="numero" id="n-legami">948</span>
+      <p><strong>Questa è la rete di <i>Infinite Jest</i>.</strong> Ogni punto è un personaggio, grande quanto i blocchi che divide con gli altri. Ogni filo è un legame: <span id="t-legami"></span> in tutto.</p>
+    </div></div>
+    <div class="passo" data-passo="mondi"><div class="carta">
+      <p><strong>La rete si divide da sola in due metà</strong>: disponendo ciascun personaggio vicino alle persone con cui ha condiviso più blocchi, il risultato sono <strong>due sistemi che ruotano attorno al proprio sole</strong>.</p>
+      <p>Da una parte c'è <span class="m eta">l'accademia</span>, attorno a Hal; dall'altra <span class="m ennet">la Ennet House</span>, attorno a Gately.</p>
+    </div></div>
+    <div class="passo" data-passo="ponti"><div class="carta">
+      <span class="numero" id="q-tra">3,2%</span>
+      <p><strong>Questi sono gli unici archi che attraversano i due mondi</strong>: <span id="t-tra"></span>. <strong>Valgono il <span id="q-tra-2"></span> di tutti quelli condivisi del romanzo</strong>, mentre il resto della rete sta tutto da una parte o dall'altra.</p>
+    </div></div>
+    <div class="passo" data-passo="joelle"><div class="carta">
+      <span class="numero" id="q-joelle">85%</span>
+      <p><strong>E quasi tutti passano da <span class="m ponte">Joelle van Dyne</span></strong>: ex fidanzata di Orin Incandenza, attrice nei film del padre, voce radiofonica di <i>«Madame Psychosis»</i> che Mario ascolta ogni notte e che nel corso del romanzo finisce alla Ennet House.</p>
+      <p><strong>Da sola regge <span id="t-joelle"></span> dei blocchi tra i due mondi.</strong></p>
+    </div></div>
+    <div class="passo" data-passo="senza"><div class="carta">
+      <span class="numero" id="q-senza">0,5%</span>
+      <p><strong>Senza di lei restano poche interazioni: <span id="t-senza"></span></strong>, molti dei quali sono punti in cui il racconto salta da un mondo all'altro dentro lo stesso capitolo o in cui un nome viene solo citato dall'altra parte.</p>
+    </div></div>
+    <div class="passo" data-passo="halgately"><div class="carta">
+      <p><strong>Hal e Gately sono i due punti più centrali della rete, ognuno nel suo mondo.</strong> Escluso il pensiero iniziale di Hal, in cui dissotterra la testa del padre James, insieme a Gately, <strong>i due condividono due blocchi</strong>. Uno è un cambio di scena; l'altro è una partita a tennis che si interrompe così:</p>
+      <p><i>«Proprio in questo momento, a 1200 metri a est giù per la collina e un livello sottoterra, Don Gately del personale residente della Ennet House giaceva profondamente addormentato…»</i></p>
+    </div></div>
+    <div class="passo" data-passo="spie"><div class="carta">
+      <span class="numero" id="n-spie">157</span>
+      <p><strong>Il legame più forte del libro</strong>, quello rappresentato con il collegamento più spesso, non è tra Hal e suo fratello né tra Gately e i suoi residenti, ma <strong>è quello di due personaggi secondari</strong>. Le conversazioni tra <span class="m altro">Rémy Marathe</span> e <span class="m altro">Hugh Steeply</span>, due agenti segreti che parlano per tutta una notte su un'altura nel deserto dell'Arizona, sono le più intense, <strong>tanto da formare un'isola a parte</strong>, collegata al resto da pochi nomi.</p>
+    </div></div>
+    <div class="passo ultimo" data-passo="esplora"><div class="carta">
+      <p><b>Ora la rete è tua.</b> Passando sopra a ciascun personaggio si evidenziano le sue interazioni e i dettagli della sua ambientazione principale.</p>
+    </div></div>
+  </div>
+</div>
+
+<!-- ============ 4. LE NOTE ============ -->
+<section class="col" id="sez-note">
+  <h2>L'altro libro, dentro le note</h2>
+  <p><i>Infinite Jest</i> ha <strong><span id="n-note-n">388</span> note, lunghe quanto <span id="pag-note"></span> pagine del romanzo</strong>, alcune durano quanto un capitolo, alcune hanno a loro volta delle note. In esse c'è <strong>l'<span id="q-note-parole"></span> delle parole del libro e l'<span id="q-note-menz"></span> delle menzioni dei personaggi</strong>.</p>
+  <p><strong>Le note prendono vita principalmente all'interno dell'accademia.</strong> Se nel romanzo metà delle menzioni riguarda l'E.T.A. e un terzo la Ennet House, <strong>nelle note l'accademia si prende quasi tutto lo spazio</strong>: è qui che stanno <i>la filmografia completa</i> del padre di Hal e buona parte delle storie dei ragazzi minori.</p>
+  <div class="legenda ig-solo">
+    <span><i style="background:var(--eta)"></i>E.T.A. e Incandenza</span>
+    <span><i style="background:var(--ennet)"></i>Ennet House</span>
+    <span><i style="background:var(--altro)"></i>altri</span>
+  </div>
+  <div class="pile" id="pile" role="img" aria-label="Quota delle menzioni per mondo nel romanzo e nelle note"></div>
+  <p><strong>Alcuni personaggi vivono più nelle note che nel romanzo</strong>: per qualche ragazzo dell'accademia le note sono metà della loro esistenza nella trama principale. Ma anche alcune relazioni compaiono solamente nelle note, infatti <mark><span id="n-solo-note">51</span> legami</mark> <strong>tra personaggi mai visti nel romanzo sono presenti solamente in fondo al libro</strong>.</p>
+  <div class="barre" id="barre" role="img" aria-label="Quota delle menzioni nelle note, per personaggio"></div>
+  <p class="nota-piccola">Quota delle menzioni di ciascun personaggio che cade nelle note. Solo personaggi con almeno 30 menzioni.</p>
+  <details><summary>Vedi i dati in tabella</summary><table class="dati" id="tab-note"></table></details>
+</section>
+
+<!-- ============ 5. COME È FATTO ============ -->
+<section class="metodo">
+  <div class="col">
+    <h2>Come è fatto</h2>
+    <p>Il testo è quello della traduzione italiana di Edoardo Nesi (Einaudi), diviso in romanzo e note. Ho cercato ogni personaggio attraverso un elenco di nomi e soprannomi (Hal per Hallie; Gately per Don G.; Lui in Persona per James O. Incandenza; la Mami per Avril) e ho tagliato il testo in blocchi da cento parole. Due personaggi sono legati se compaiono nello stesso blocco, mentre il peso del legame è il numero di blocchi condivisi.</p>
+    <p>Ho tolto le menzioni che non indicano un personaggio (Green Valley, Clipperton Suite, Marlon Brando) e ho controllato a mano sull'edizione cartacea le coppie dell'accademia e della Ennet House che nel romanzo compaiono insieme una volta sola: alcuni erano falsi incontri, come due paragrafi di scene diverse, e sono stati tolti, i casi dubbi sono rimasti e le note non sono state controllate una per una.</p>
+    <p>Il metodo ha dei limiti. Conta i nomi, non i pronomi: Hal racconta in prima persona alcuni capitoli e lì il suo nome compare poco. Alcuni capitoli alternano i due mondi senza uno stacco di scena segnato e un blocco a cavallo può creare un legame che non c'è; per quanto i casi in cui c'era un solo blocco condiviso sono stati controllati a mano, è possibile che questo sia accaduto più di una volta e quindi non è stato possibile verificarlo manualmente. La disposizione dei punti è calcolata con un algoritmo della libreria NetworkX di Python che avvicina i personaggi legati più spesso, mentre le comunità vengono calcolate con il metodo di Louvain.</p>
+  </div>
+</section>
+</main>
+<div class="tip" id="tip"></div>
+
+<script>
+// ===================================================================================
+// Dati e piccoli aiuti
+// ===================================================================================
+const N = DATI.numeri;
+// ?ig=rete-<passo> | striscia | pile | barre: modalità per le immagini di Instagram (vedi il CSS di body.ig)
+const IG = new URLSearchParams(location.search).get("ig");
+if (IG) document.body.classList.add("ig", "ig-" + IG.split("-")[0], "ig-" + IG);
+const fmt = (x) => x.toLocaleString("it-IT");
+const pct = (x, d = 1) => (x * 100).toLocaleString("it-IT", { minimumFractionDigits: d, maximumFractionDigits: d }) + "%";
+const PRIMA_PAGINA = 3, ULTIMA_PAGINA = 1179;   // il romanzo nell'edizione Einaudi, note escluse
+const nodi = DATI.nodi, perId = Object.fromEntries(nodi.map((n) => [n.id, n]));
+const legami = DATI.legami.map((l) => ({ ...l, A: perId[l.a], B: perId[l.b] }));
+const COLORE = { ETA: "var(--eta)", Ennet: "var(--ennet)", altro: "var(--altro)" };
+const mondi = (l) => new Set([l.A.mondo, l.B.mondo]);
+const tra = legami.filter((l) => mondi(l).has("ETA") && mondi(l).has("Ennet"));
+const conJoelle = (l) => l.a === "joelle" || l.b === "joelle";
+const pesoTra = d3.sum(tra, (l) => l.p), pesoSenza = d3.sum(tra.filter((l) => !conJoelle(l)), (l) => l.p);
+
+// numeri nel testo: tutti calcolati qui dai dati, così restano giusti se i dati cambiano
+const scrivi = (id, testo) => { const e = document.getElementById(id); if (e) e.textContent = testo; };
+scrivi("n-pers", N.personaggi);
+scrivi("n-entrambi", fmt(N.blocchi_entrambi)); scrivi("n-blocchi", fmt(N.blocchi_romanzo));
+scrivi("q-entrambi", pct(N.blocchi_entrambi / N.blocchi_romanzo));
+scrivi("n-legami", fmt(N.legami)); scrivi("t-legami", `${fmt(N.legami)}, per ${fmt(N.blocchi_legame)} blocchi condivisi`);
+scrivi("q-tra", pct(N.tra_peso / N.blocchi_legame)); scrivi("q-tra-2", pct(N.tra_peso / N.blocchi_legame));
+scrivi("t-tra", `${tra.length} interazioni, per un totale di ${fmt(pesoTra)} blocchi`);
+scrivi("q-joelle", pct(N.joelle_tra / N.tra_peso, 0)); scrivi("t-joelle", `${N.joelle_tra} su ${pesoTra}`);
+scrivi("q-joelle-testo", pct(N.joelle_tra / N.tra_peso, 0));
+scrivi("q-senza", pct(pesoSenza / N.blocchi_legame));
+scrivi("t-senza", `${tra.filter((l) => !conJoelle(l)).length} legami, per ${pesoSenza} blocchi in tutto il libro`);
+scrivi("n-spie", d3.max(legami, (l) => l.p));
+scrivi("n-solo-note", N.solo_note);
+scrivi("pag-note", Math.round(N.parole_note / N.parole_romanzo * (ULTIMA_PAGINA - PRIMA_PAGINA) / 10) * 10);
+scrivi("q-note-parole", pct(N.parole_note / (N.parole_note + N.parole_romanzo), 0));
+scrivi("q-note-menz", pct(N.menzioni_note / N.menzioni, 0));
+
+const tip = document.getElementById("tip");
+function mostraTip(html, x, y) {
+  tip.innerHTML = html; tip.style.opacity = 1;
+  const r = tip.getBoundingClientRect();
+  const left = Math.min(x + 14, innerWidth - r.width - 8), top = y + 14 + r.height > innerHeight ? y - r.height - 14 : y + 14;
+  tip.style.left = Math.max(8, left) + "px"; tip.style.top = top + "px";
+}
+const nascondiTip = () => (tip.style.opacity = 0);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+// ===================================================================================
+// 2. La striscia: un quadratino per blocco, su un <canvas> (sono più di 5.000)
+// ===================================================================================
+(function striscia() {
+  const cv = document.getElementById("striscia"), box = document.getElementById("striscia-box");
+  const s = DATI.striscia, n = s.length;
+  const COLORI = { 0: css("--tenue"), 1: css("--eta"), 2: css("--ennet"), 3: css("--ev"), 4: css("--altro") };
+  let geo;   // geometria corrente: per riga, lato del quadratino, passo
+
+  function disegna() {
+    const w = box.clientWidth;
+    // per Instagram la striscia deve stare tutta nella slide: quadratini grandi quanto basta a riempirla
+    const altezza = innerHeight - 2 * 28 - 70;
+    const perRiga = IG ? Math.ceil(n / Math.floor(altezza / Math.sqrt(w * altezza / n))) : w < 600 ? 50 : 100;
+    const passo = w / perRiga, lato = Math.max(1, passo - (passo > 5 ? 1 : 0.5));
+    const righe = Math.ceil(n / perRiga), h = righe * passo;
+    const dpr = devicePixelRatio || 1;
+    cv.width = w * dpr; cv.height = h * dpr; cv.style.height = h + "px";
+    const c = cv.getContext("2d"); c.scale(dpr, dpr);
+    for (let i = 0; i < n; i++) {
+      const x = (i % perRiga) * passo, y = Math.floor(i / perRiga) * passo;
+      c.fillStyle = COLORI[s[i]]; c.fillRect(x, y, lato, lato);
+    }
+    // i blocchi con entrambi i mondi: lime con un bordo nero, se no sul bianco non si vedono
+    c.strokeStyle = "#000"; c.lineWidth = 1;
+    for (let i = 0; i < n; i++) if (s[i] === "3") {
+      const x = (i % perRiga) * passo, y = Math.floor(i / perRiga) * passo;
+      c.strokeRect(x + .5, y + .5, lato - 1, lato - 1);
+    }
+    geo = { perRiga, passo };
+  }
+  disegna();
+  new ResizeObserver(disegna).observe(box);
+
+  // il capitolo (titolo con la data) di un blocco
+  const scene = DATI.scene;
+  const capitolo = (b) => { let t = ""; for (const sc of scene) { if (sc.b > b) break; if (sc.t) t = sc.t; } return t; };
+  const ETICHETTA = { 0: "nessun personaggio", 1: "E.T.A. e Incandenza", 2: "Ennet House", 3: "entrambi i mondi", 4: "solo altri personaggi" };
+
+  cv.addEventListener("pointermove", (e) => {
+    const r = cv.getBoundingClientRect();
+    const i = Math.floor((e.clientY - r.top) / geo.passo) * geo.perRiga + Math.floor((e.clientX - r.left) / geo.passo);
+    if (i < 0 || i >= n) return nascondiTip();
+    const chi = DATI.chi[i] ? DATI.chi[i].split(" ").map((id) => perId[id].nome).join(", ") : "nessun personaggio";
+    const pagina = Math.round(PRIMA_PAGINA + (i / n) * (ULTIMA_PAGINA - PRIMA_PAGINA));
+    mostraTip(`<span class="mono">circa p. ${pagina}, ${capitolo(i).toLowerCase()}</span><br><b>${ETICHETTA[s[i]]}</b><br>${chi}`, e.clientX, e.clientY);
+  });
+  cv.addEventListener("pointerleave", nascondiTip);
+})();
+
+// ===================================================================================
+// 3. La rete grande
+// ===================================================================================
+const svg = d3.select("#rete");
+const gFili = svg.append("g"), gNodi = svg.append("g"), gNomi = svg.append("g");
+const raggio0 = d3.scaleSqrt().domain([0, d3.max(nodi, (n) => n.forza)]).range([2.5, 26]);
+let scalaR = 1;   // sugli schermi piccoli i punti si rimpiccioliscono insieme alla rete
+const raggio = (f) => raggio0(f) * scalaR;
+const spessore = d3.scaleSqrt().domain([1, d3.max(legami, (l) => l.p)]).range([0.4, 7]);
+
+// La disposizione parte da quella calcolata in Python (networkx) e la rifinisco qui con una simulazione a forze
+// che impedisce ai punti di sovrapporsi e tiene vicini i personaggi isolati. d3-force è deterministico:
+// a parità di dati la rete esce sempre uguale. Lavoro in uno spazio di 1000×1000 e poi riporto tutto in [0,1].
+(function rifinisci() {
+  const maxP = d3.max(legami, (l) => l.p);
+  const sim = d3.forceSimulation(nodi.map((n) => Object.assign(n, { x: n.x * 1000, y: n.y * 1000 })))
+    .force("link", d3.forceLink(legami.map((l) => ({ source: l.a, target: l.b, p: l.p }))).id((n) => n.id)
+      .distance((l) => 90 - 50 * Math.log(l.p) / Math.log(maxP)).strength((l) => 0.04 + 0.5 * Math.log(1 + l.p) / Math.log(1 + maxP)))
+    .force("carica", d3.forceManyBody().strength(-160))
+    .force("urto", d3.forceCollide((n) => raggio(n.forza) + 7).iterations(3))
+    .force("x", d3.forceX(500).strength(0.06)).force("y", d3.forceY(500).strength(0.06))
+    .stop();
+  for (let i = 0; i < 600; i++) sim.tick();
+  // giro la rete in modo che l'asse accademia → Ennet House sia orizzontale (l'accademia a sinistra)
+  const centro = (m) => [d3.mean(nodi.filter((n) => n.mondo === m), (n) => n.x), d3.mean(nodi.filter((n) => n.mondo === m), (n) => n.y)];
+  const [e, h] = [centro("ETA"), centro("Ennet")], ang = -Math.atan2(h[1] - e[1], h[0] - e[0]);
+  nodi.forEach((n) => { const x = n.x - 500, y = n.y - 500;
+    n.x = x * Math.cos(ang) - y * Math.sin(ang); n.y = x * Math.sin(ang) + y * Math.cos(ang); });
+  const ex = d3.extent(nodi, (n) => n.x), ey = d3.extent(nodi, (n) => n.y), lato = Math.max(ex[1] - ex[0], ey[1] - ey[0]);
+  // stessa scala sui due assi, così le distanze restano vere
+  nodi.forEach((n) => { n.x = (n.x - ex[0]) / lato; n.y = (n.y - ey[0]) / lato; delete n.vx; delete n.vy; delete n.index; });
+  rifinisci.alto = (ey[1] - ey[0]) / lato; rifinisci.largo = (ex[1] - ex[0]) / lato;
+  window.PROPORZIONI = { largo: rifinisci.largo, alto: rifinisci.alto };
+})();
+
+// sui telefoni in verticale ruoto la rete di 90° per riempire lo schermo
+let X, Y;
+function misura() {
+  const w = svg.node().clientWidth, h = svg.node().clientHeight;
+  const verticale = h > w * 1.15;
+  // spazio libero per la carta del testo: a sinistra sugli schermi larghi, in basso sui telefoni
+  const sinistra = IG ? 20 : w >= 900 ? Math.min(460, w * 0.36) : 24, destra = IG ? 20 : 24;
+  const sopra = IG ? 60 : verticale ? 64 : 56, sotto = IG ? 20 : verticale ? 0.34 * h : 30;
+  const W = w - sinistra - destra, H = h - sopra - sotto;
+  const { largo, alto } = PROPORZIONI;
+  const [lx, ly] = verticale ? [alto, largo] : [largo, alto];   // in verticale gli assi sono scambiati
+  const k = Math.min(W / lx, H / ly);                          // una sola scala: la rete non si deforma
+  const ox = sinistra + (W - lx * k) / 2, oy = sopra + (H - ly * k) / 2;
+  const sx = (v) => ox + v * k, sy = (v) => oy + v * k;
+  scalaR = Math.max(0.45, Math.min(1, k / 750));
+  // a sinistra l'accademia, a destra la Ennet House (se la disposizione li ha messi al contrario, la specchio)
+  const eta = d3.mean(nodi.filter((n) => n.mondo === "ETA"), (n) => n.x), ennet = d3.mean(nodi.filter((n) => n.mondo === "Ennet"), (n) => n.x);
+  const fx = eta > ennet ? (v) => 1 - v : (v) => v;
+  const fxv = eta > ennet ? (v) => largo - v : (v) => v;
+  if (verticale) { X = (n) => sx(n.y); Y = (n) => sy(fxv(n.x)); }
+  else { X = (n) => sx(fxv(n.x)); Y = (n) => sy(n.y); }
+  svg.attr("viewBox", `0 0 ${w} ${h}`);
+}
+misura();
+
+const fili = gFili.selectAll("line").data(legami.sort((a, b) => a.p - b.p)).join("line").attr("class", "filo");
+const cerchi = gNodi.selectAll("circle").data(nodi).join("circle").attr("class", "nodo").attr("r", (n) => raggio(n.forza));
+const nomi = gNomi.selectAll("text").data(nodi).join("text").attr("class", (n) => "nome" + (n.forza > 500 ? " grande" : ""))
+  .attr("text-anchor", "middle").text((n) => n.nome);
+
+function posiziona() {
+  fili.attr("x1", (l) => X(l.A)).attr("y1", (l) => Y(l.A)).attr("x2", (l) => X(l.B)).attr("y2", (l) => Y(l.B));
+  cerchi.attr("cx", X).attr("cy", Y).attr("r", (n) => raggio(n.forza));
+  nomi.attr("x", X).attr("y", (n) => Y(n) - raggio(n.forza) - 4);
+}
+posiziona();
+new ResizeObserver(() => { misura(); posiziona(); if (typeof passoCorrente !== "undefined") applica(passoCorrente, 0); }).observe(svg.node());
+
+// ---- i passi: ognuno dice come colorare punti e fili e quali nomi mostrare
+const GRIGIO = "var(--testo)";
+const PRINCIPALI = new Set(["hal", "gately", "joelle", "orin", "mario", "avril", "pemulis", "lenz", "marathe", "steeply", "joi", "schtitt"].filter((id) => perId[id]));    // i più legati, con il nome sempre visibile
+const PASSI = {
+  tutti: { nodo: () => GRIGIO, filo: () => ["var(--filo)", 0.5], nomi: (n) => ["hal", "gately"].includes(n.id) },
+  mondi: { nodo: (n) => COLORE[n.mondo], filo: () => ["var(--filo)", 0.45], nomi: (n) => PRINCIPALI.has(n.id) },
+  ponti: { nodo: (n) => COLORE[n.mondo], filo: (l) => tra.includes(l) ? ["#000", 0.9] : ["var(--filo)", 0.1],
+           nomi: (n) => tra.some((l) => l.p >= 3 && (l.A === n || l.B === n)) },
+  // Joelle è della Ennet House: si accendono tutti i suoi legami, verso l'accademia e verso la Ennet House,
+  // così si vede che sta in mezzo ai due mondi; gli altri fili tra i mondi restano tenui
+  joelle: { nodo: (n) => n.id === "joelle" ? "var(--ev)" : COLORE[n.mondo],
+            filo: (l) => conJoelle(l) ? ["#000", 1] : tra.includes(l) ? ["#000", 0.2] : ["var(--filo)", 0.08],
+            nomi: (n) => n.id === "joelle" || legami.some((l) => conJoelle(l) && l.p >= 4 && (l.A === n || l.B === n)), sbiadisci: (n) => false },
+  senza: { nodo: (n) => COLORE[n.mondo], filo: (l) => tra.includes(l) && !conJoelle(l) ? ["#000", 1] : ["var(--filo)", 0.08],
+           nomi: (n) => tra.some((l) => !conJoelle(l) && (l.A === n || l.B === n)) && n.forza > 150, sbiadisci: (n) => n.id === "joelle" },
+  halgately: { nodo: (n) => ["hal", "gately"].includes(n.id) ? COLORE[n.mondo] : "var(--altro)",
+               filo: (l) => (l.a === "gately" && l.b === "hal") || (l.a === "hal" && l.b === "gately") ? ["#000", 1, 5]
+                 : (l.a === "hal" || l.b === "hal" || l.a === "gately" || l.b === "gately") ? ["var(--filo)", 0.4] : ["var(--filo)", 0.06],
+               nomi: (n) => ["hal", "gately"].includes(n.id) },
+  spie: { nodo: (n) => n.comunita === perId.marathe.comunita ? "var(--testo)" : "var(--altro)",
+          filo: (l) => l.A.comunita === perId.marathe.comunita && l.B.comunita === perId.marathe.comunita ? ["#000", 0.8] : ["var(--filo)", 0.08],
+          nomi: (n) => n.comunita === perId.marathe.comunita && n.forza > 15 },
+  esplora: { nodo: (n) => COLORE[n.mondo], filo: () => ["var(--filo)", 0.5], nomi: (n) => PRINCIPALI.has(n.id) },
+};
+// I nomi da mostrare non devono accavallarsi. Parto dai protagonisti e poi dai personaggi più legati;
+// per ognuno provo due posizioni (sopra e sotto il punto, così è chiaro di chi è il nome) e tengo la prima che non tocca
+// un nome già messo né il punto di un protagonista; se non ce n'è una libera il nome non compare.
+// Restituisce gli id dei nomi mostrati.
+const PRIMA = ["hal", "gately", "joelle", "marathe", "steeply"];
+function sistemaNomi(vuoi) {
+  const messi = [], ok = new Set();
+  const punti = nodi.filter((n) => PRIMA.includes(n.id) && vuoi(n)).map((n) => ({ id: n.id, x: X(n) - raggio(n.forza), y: Y(n) - raggio(n.forza), width: 2 * raggio(n.forza), height: 2 * raggio(n.forza) }));
+  const urta = (b, m) => b.x < m.x + m.width + 2 && m.x < b.x + b.width + 2 && b.y < m.y + m.height && m.y < b.y + b.height;
+  const peso = (n) => (PRIMA.includes(n.id) ? 1e6 - PRIMA.indexOf(n.id) : n.forza);
+  nomi.attr("x", X).attr("y", (n) => Y(n) - raggio(n.forza) - 4).attr("text-anchor", "middle");
+  nomi.filter(vuoi).sort((a, b) => peso(b) - peso(a)).each(function (n) {
+    const r = raggio(n.forza), el = d3.select(this);
+    const posti = [[X(n), Y(n) - r - 4, "middle"], [X(n), Y(n) + r + 12, "middle"]];
+    for (const [x, y, a] of posti) {
+      el.attr("x", x).attr("y", y).attr("text-anchor", a);
+      const b = this.getBBox();
+      if (!messi.some((m) => urta(b, m)) && !punti.some((p) => p.id !== n.id && urta(b, p))) { messi.push(b); ok.add(n.id); return; }
+    }
+    el.attr("x", X(n)).attr("y", Y(n) - r - 4).attr("text-anchor", "middle");
+  });
+  return ok;
+}
+let passoCorrente = "tutti";
+function applica(nome, durata = 600) {
+  passoCorrente = nome;
+  const P = PASSI[nome];
+  const t = d3.transition().duration(durata);
+  const anima = (sel) => (durata ? sel.transition(t) : sel.interrupt());   // a durata zero (schermate) niente transizioni
+  anima(cerchi).attr("fill", P.nodo).attr("opacity", (n) => (P.sbiadisci && P.sbiadisci(n) ? 0.12 : 1))
+    .attr("stroke", (n) => (nome === "joelle" && n.id === "joelle" ? "#000" : "#fff"));
+  fili.each(function (l) {
+    const [col, op, w] = P.filo(l);
+    d3.select(this).style("stroke", col).style("stroke-opacity", op).style("stroke-width", w || spessore(l.p));
+  });
+  // nel passo di Joelle i suoi fili si ingrossano (il punto è lime: il lime sottile sul bianco non si vedrebbe nei fili)
+  if (nome === "joelle") fili.filter(conJoelle).style("stroke-width", (l) => Math.max(1.6, spessore(l.p) * 1.3));
+  // sui telefoni i nomi si accavallano: tengo solo i protagonisti del passo
+  const stretto = innerWidth < 600 && !IG, POCHI = new Set(["hal", "gately", "joelle", "orin", "marathe", "steeply"]);
+  const visibili = sistemaNomi((n) => P.nomi(n) && (!stretto || POCHI.has(n.id)));
+  anima(nomi).attr("opacity", (n) => (visibili.has(n.id) ? 1 : 0));
+  // i fili neri vanno sopra quelli grigi
+  fili.filter(function () { return this.style.stroke === "rgb(0, 0, 0)" || this.style.stroke === "#000"; }).raise();
+  document.getElementById("cerca").classList.toggle("on", nome === "esplora");
+}
+// ?passo=joelle (o un altro nome di PASSI) apre la pagina direttamente sulla rete a quel passo: serve per le schermate
+const passoUrl = new URLSearchParams(location.search).get("passo");
+// con &solo si vede solo la rete con la carta di quel passo
+if (IG && IG.startsWith("rete-") && PASSI[IG.slice(5)]) applica(IG.slice(5), 0);
+else if (passoUrl && PASSI[passoUrl]) {
+  const el = document.querySelector(`[data-passo="${passoUrl}"]`);
+  if (new URLSearchParams(location.search).has("solo")) { document.body.classList.add("solo"); el.classList.add("attivo"); misura(); posiziona(); }
+  else el.scrollIntoView({ block: "center" });
+  applica(passoUrl, 0);
+} else applica("tutti", 0);
+
+// ogni passo del testo che arriva a metà schermo cambia la rete
+const osserva = new IntersectionObserver((voci) => {
+  for (const v of voci) if (v.isIntersecting) applica(v.target.dataset.passo);
+}, { rootMargin: "-45% 0px -45% 0px" });
+if (!document.body.classList.contains("solo")) document.querySelectorAll(".passo").forEach((p) => osserva.observe(p));
+
+// ---- passaggio del mouse (o tocco) su un personaggio: i suoi legami e i più forti nel riquadro
+const vicini = d3.group(legami.flatMap((l) => [[l.a, l.B, l], [l.b, l.A, l]]), (x) => x[0]);
+const NOME_MONDO = { ETA: "E.T.A. e Incandenza", Ennet: "Ennet House", altro: "" };
+function evidenzia(n, x, y) {
+  const miei = new Set((vicini.get(n.id) || []).map((v) => v[1].id)); miei.add(n.id);
+  cerchi.attr("opacity", (m) => (miei.has(m.id) ? 1 : 0.15));
+  fili.style("stroke", (l) => (l.a === n.id || l.b === n.id ? "#000" : "var(--filo)"))
+      .style("stroke-opacity", (l) => (l.a === n.id || l.b === n.id ? 0.85 : 0.05));
+  nomi.attr("opacity", (m) => (m.id === n.id ? 1 : 0));
+  const top = (vicini.get(n.id) || []).sort((a, b) => b[2].p - a[2].p).slice(0, 5)
+    .map((v) => `${v[1].nome} <span class="mono">${v[2].p}</span>`).join("<br>");
+  mostraTip(`<b>${n.nome}</b><br><span class="mono">${n.gruppo}, ${fmt(n.menzioni)} menzioni, ${n.grado} legami</span><br>${top}`, x, y);
+}
+function rilascia() { nascondiTip(); applica(passoCorrente, 0); }
+cerchi.on("pointerenter", (e, n) => evidenzia(n, e.clientX, e.clientY))
+      .on("pointermove", (e) => mostraTip(tip.innerHTML, e.clientX, e.clientY))
+      .on("pointerleave", rilascia);
+svg.on("click", (e) => { if (e.target.tagName !== "circle") rilascia(); });
+
+// ---- ricerca per nome (solo nell'ultimo passo)
+document.getElementById("elenco-nomi").innerHTML = nodi.map((n) => `<option value="${n.nome}">`).join("");
+document.getElementById("cerca").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const q = document.getElementById("cerca-in").value.trim().toLowerCase();
+  const n = nodi.find((m) => m.nome.toLowerCase() === q) || nodi.find((m) => m.nome.toLowerCase().includes(q));
+  if (!n) return;
+  const r = svg.node().getBoundingClientRect();
+  evidenzia(n, r.left + X(n), r.top + Y(n));
+});
+
+// ===================================================================================
+// 4. Le note: quota delle menzioni nelle note, per personaggio
+// ===================================================================================
+(function note() {
+  // romanzo contro note: quota delle menzioni per mondo
+  const quote = (f) => { const t = { ETA: 0, Ennet: 0, altro: 0 }; nodi.forEach((n) => (t[n.mondo] += f(n))); const s = d3.sum(Object.values(t)); for (const k in t) t[k] /= s; return t; };
+  const pile = [["romanzo", quote((n) => n.menzioni - n.menzioni_note)], ["note", quote((n) => n.menzioni_note)]];
+  const NOMI_BREVI = { ETA: "accademia", Ennet: "Ennet", altro: "altri" };
+  document.getElementById("pile").innerHTML = pile.map(([nome, q]) => `<div class="riga"><span>${nome}</span><div class="barra">` +
+    ["ETA", "Ennet", "altro"].map((m) => `<div class="pezzo ${m === "ETA" ? "eta" : m === "Ennet" ? "ennet" : "altro"}" style="width:${q[m] * 100}%" title="${NOMI_BREVI[m]}: ${pct(q[m], 0)}">${q[m] > 0.14 ? NOMI_BREVI[m] + " " + pct(q[m], 0) : IG && q[m] > 0.04 ? pct(q[m], 0) : ""}</div>`).join("") +
+    "</div></div>").join("");
+
+  const righe = nodi.filter((n) => n.menzioni >= 30).map((n) => ({ ...n, q: n.menzioni_note / n.menzioni }))
+    .sort((a, b) => b.q - a.q).slice(0, 12);
+  const max = d3.max(righe, (r) => r.q);
+  document.getElementById("barre").innerHTML = righe.map((r, i) => `
+    <div class="riga${i === 0 ? " top" : ""}"><span class="nomeb">${r.nome}</span>
+      <div><div class="barra ${r.mondo === "ETA" ? "eta" : r.mondo === "altro" ? "altro" : ""}" style="width:${(r.q / max) * 100}%"></div></div>
+      <span class="n">${pct(r.q, 0)}</span></div>`).join("");
+  document.getElementById("tab-note").innerHTML = "<tr><th>Personaggio</th><th>Mondo</th><th>Menzioni</th><th>Nelle note</th><th>Quota</th></tr>" +
+    righe.map((r) => `<tr><td>${r.nome}</td><td>${NOME_MONDO[r.mondo] || "altri"}</td><td class="n">${r.menzioni}</td><td class="n">${r.menzioni_note}</td><td class="n">${pct(r.q, 0)}</td></tr>`).join("");
+})();
+</script>
+<div class="fine"></div>
+
+<section class="alea-fondo" data-nosnippet>
+  <div class="alea-fondo-in">
+    <a class="alea-invito" href="/">Questo è un progetto di <b>àlea</b>, dai un'occhiata anche agli altri →</a>
+    <div class="alea-altri"><a href="/prova-a-fare-il-caso/"><span class="t">Non siamo bravi a simulare la casualità</span><span class="s">Inventa cento lanci di moneta: un programma che non sa niente di te proverà a prevederli. Poi li confrontiamo con una moneta vera.</span></a><a href="/litigi-tra-alleati/"><span class="t">I litigi tra gli alleati di governo</span><span class="s">Governano insieme e votano insieme la fiducia, ma in aula si contestano: 1.047 volte, alla Camera, dal 1948 al 2022.</span></a></div>
+    <div class="alea-barra">newsletter ↓</div>
+    <div class="alea-nl">
+      <div>
+        <h3>Un'email quando esce un nuovo articolo.</h3>
+        <p>Niente spam, niente cadenza fissa: solo quando c'è qualcosa da leggere.</p>
+      </div>
+      <form class="alea-iscr" action="https://aalea.substack.com/subscribe" method="get" target="_blank">
+        <input type="email" name="email" placeholder="la tua email" aria-label="email" required>
+        <button>iscriviti</button>
+      </form>
+    </div>
+    <footer class="alea-piede">
+      <div><h4>about</h4><p>àlea è un progetto di data e visual journalism ideato da <a href="https://www.davidruffini.com" target="_blank" rel="noopener">David Ruffini</a> per raccontare storie su probabilità, società, cultura e molto altro.</p></div>
+      <div class="alea-col"><h4>contatti</h4><a href="mailto:ciao@alea.news">ciao@alea.news</a></div>
+      <div class="alea-col"><h4>social</h4><a href="https://www.instagram.com/alea.rivista/" target="_blank" rel="noopener">instagram ↗</a><a href="https://www.linkedin.com/company/%C3%A0lea/" target="_blank" rel="noopener">linkedin ↗</a></div>
+    </footer>
+  </div>
+</section>
+</body>
+</html>

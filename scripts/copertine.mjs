@@ -14,6 +14,7 @@ import { pathToFileURL } from "node:url";
 const COPERTINE = [
   { nome: "litigi", y: 305 },    // la scena di Cè (governo Berlusconi II): titolo, alleati e dialogo
   { nome: "moneta", y: 2850 },   // la serie più lunga: testo e grafico, con il lettore in nero
+  { nome: "infinite-jest", y: 0 },  // la rete al passo di Joelle (pagina con ?ig=rete-joelle, telefono alto 488)
 ];
 
 const EDGE = ["C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Microsoft/Edge/Application/msedge.exe"].find(existsSync);

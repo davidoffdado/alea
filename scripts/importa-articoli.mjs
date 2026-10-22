@@ -24,6 +24,12 @@ const ARTICOLI = [
     pagina: "litigi.html",
     risorse: ["foto", "loghi"],                     // cartelle usate dalla pagina con percorsi relativi
   },
+  {
+    cartella: "la-rete-di-infinite-jest",
+    sorgente: "../infinite_jest/viz",               // i dati si rigenerano con script/06_rete_verificata.py nel progetto
+    pagina: "infinite_jest.html",
+    risorse: ["dati.js"],
+  },
 ];
 
 // gli articoli fatti con l'editor (strumenti/editor-articoli.html) stanno in articoli/<cartella>.html, un file solo
