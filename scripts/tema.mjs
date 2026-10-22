@@ -53,7 +53,7 @@ export const CSS_TEMA = {
 export const TESTI_TEMA = {
   "prova-a-fare-il-caso": [
     ["la linea rossa", "la linea nera"],
-    ["Tavola 1 · Cento lanci inventati", "Tavola 1 — Cento lanci inventati"],
+    ["Tavola 1 · Cento lanci inventati", "Tavola 1 - Cento lanci inventati"],
     ['lancio <b class="tu" id="conta">000</b>/100', 'Lancio <b class="tu" id="conta">0</b> di 100'],
     ['String(seq.length).padStart(3, "0")', "String(seq.length)"],
     ["<span>il programma ne ha indovinati", "<span>Il programma ne ha indovinati"],
