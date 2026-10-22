@@ -42,8 +42,9 @@
   /* evidenziatori con i colori della striscia e della rete, per spiegare la legenda dentro il testo */
   mark.eta { background: var(--eta); color: #fff; } mark.ennet { background: var(--ennet); color: #000; }
   mark.altro { background: var(--altro); color: #000; } mark.ponte { outline: 1px solid #000; outline-offset: -1px; }
-  a { color: inherit; text-decoration: underline; text-decoration-color: var(--ev); text-decoration-thickness: 3px; text-underline-offset: 3px; }
-  a:hover { background: var(--ev); color: #000; }
+  /* solo i link dell'articolo: testata, firma e fondo di àlea hanno il loro stile */
+  main a { color: inherit; text-decoration: underline; text-decoration-color: var(--ev); text-decoration-thickness: 3px; text-underline-offset: 3px; }
+  main a:hover { background: var(--ev); color: #000; }
   blockquote { margin: 32px 0; padding: 0 0 0 20px; border-left: 4px solid var(--ev); font-size: 1.3rem; line-height: 1.45; font-family: "General Sans", sans-serif; letter-spacing: -.01em; }
   blockquote cite { display: block; margin-top: 10px; font: .78rem/1.4 "Noto Sans", sans-serif; color: var(--testo-2); font-style: normal; }
   /* i nomi dei mondi nel testo portano un quadratino del loro colore: il colore non è mai l'unico segnale */
