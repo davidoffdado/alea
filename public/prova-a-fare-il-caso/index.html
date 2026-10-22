@@ -91,6 +91,7 @@
   em { font-style: italic; }
   .nota { color: var(--testo-2); font-size: .85rem; }
   .tu { color: var(--tu-testo); font-weight: 700; }          /* parole che parlano del lettore */
+  mark { background: none; color: var(--tu-testo); font-weight: 700; }   /* parole chiave evidenziate */
   .macchina { color: var(--accento); font-weight: 700; }     /* parole che parlano della macchina */
   kbd { border: 1px solid var(--linea); padding: 0 5px; color: var(--accento); font: inherit; }
 
@@ -286,7 +287,7 @@
   .cifre, .griglia, .cella, table, .stato, .asse text, .segno text, .leg { font-variant-numeric: tabular-nums; }
   .barra-titolo { font-size: .85rem !important; font-weight: 600 !important; letter-spacing: 0 !important; text-transform: none !important; }
   .tasti button { text-transform: none !important; letter-spacing: 0 !important; }
-  .tu { background: #d4ff3a; color: #000 !important; padding: 0 .15em; }
+  .tu, mark { background: #d4ff3a; color: #000 !important; padding: 0 .15em; }
   td.tu { background: none; color: #111111 !important; }
   .confronto .cella.serie-tu { color: #fff !important; }
   .g-caso .cella { color: #5e5d58 !important; }                                  /* le lettere della moneta vera: --macchina qui è troppo chiaro */
@@ -341,8 +342,8 @@
     <h1>Non siamo bravi a simulare la casualità</h1>
 <p class="alea-firma">di <a href="https://www.davidruffini.com" target="_blank" rel="noopener">David Ruffini</a>, 10 ottobre 2026</p>
 
-    <p>Nella seconda metà degli anni Quaranta i metodi Monte Carlo iniziarono a prendere sempre più piede all'interno della ricerca scientifica, specialmente nel campo della fisica, della statistica, della ricerca operativa e, in generale, nella matematica applicata. Questi approcci si ponevano come obiettivo di risolvere determinati problemi numerici, specialmente in sistemi complessi, basandosi sul campionamento casuale, con l'idea che un preciso risultato si possa approssimare abbastanza bene facendo tanti tentativi e facendo emergere uno schema dalle varie prove casuali eseguite. Del tipo, prova e vedi.</p>
-    <p>Il problema principale era che alla base del metodo Monte Carlo c'è la casualità e, se ancora oggi la maggior parte dei numeri «casuali» generati dai computer è in realtà pseudo-casuale, cioè prodotta da un algoritmo che, partendo dallo stesso punto, restituisce sempre la stessa sequenza, negli anni Quaranta la situazione era ancora più complessa. Nel 1947 il progetto RAND, nato dentro la Douglas Aircraft Company, costruì un apparecchio elettronico per generare un milione di cifre casuali e 100.000 valori di una distribuzione normale, derivati dalle prime 500.000 cifre del campione. Nel 1955 la RAND Corporation, diventata nel frattempo un ente indipendente, pubblicò il libro <em>A Million Random Digits with 100,000 Normal Deviates</em>, dove vennero inserite le cifre generate, creando un <em>gold standard</em> per le simulazioni Monte Carlo.</p>
+    <p><strong>Nella seconda metà degli anni Quaranta i metodi Monte Carlo iniziarono a prendere sempre più piede all'interno della ricerca scientifica</strong>, specialmente nel campo della fisica, della statistica, della ricerca operativa e, in generale, nella matematica applicata. Questi approcci si ponevano come obiettivo di <strong>risolvere determinati problemi numerici, specialmente in sistemi complessi, basandosi sul campionamento casuale, con l'idea che un preciso risultato si possa approssimare abbastanza bene facendo tanti tentativi</strong> e facendo emergere uno schema dalle varie prove casuali eseguite. Del tipo, prova e vedi.</p>
+    <p>Il problema principale era che alla base del metodo Monte Carlo c'è la <mark>casualità</mark> e, se ancora oggi la maggior parte dei numeri «casuali» generati dai computer è in realtà pseudo-casuale, cioè prodotta da un algoritmo che, partendo dallo stesso punto, restituisce sempre la stessa sequenza, negli anni Quaranta la situazione era ancora più complessa. <strong>Nel 1947 il progetto RAND, nato dentro la Douglas Aircraft Company, costruì un apparecchio elettronico per generare un milione di cifre casuali</strong> e 100.000 valori di una distribuzione normale, derivati dalle prime 500.000 cifre del campione. Nel 1955 la RAND Corporation, diventata nel frattempo un ente indipendente, pubblicò il libro <em>A Million Random Digits with 100,000 Normal Deviates</em>, dove vennero inserite le cifre generate, creando un gold standard per le simulazioni Monte Carlo.</p>
     
     <!-- la tavola: la riempie JavaScript quando compare l'articolo. aria-hidden: è decorativa,
          i lettori di schermo la saltano (la nota sotto spiega cos'è) -->
@@ -351,7 +352,7 @@
 
     <!-- questo paragrafo parla a chi ha giocato; per chi sceglie "leggere e basta" JavaScript lo sostituisce
          con una variante (vedi testoGiocoEsempio nella sezione 6) -->
-    <p id="testo-gioco">Generare numeri casuali non è qualcosa di semplice e spesso un essere umano fallisce nel tentativo di provarci. Nel gioco iniziale ti ho chiesto di simulare il lancio di una moneta, cercando di imitarne una vera il più fedelmente possibile e ora andremo a vedere quali sono stati i risultati e se il programma incaricato di prevedere la tua prossima mossa ti ha battuto.</p>
+    <p id="testo-gioco"><strong>Generare numeri casuali non è qualcosa di semplice e spesso un essere umano fallisce nel tentativo di provarci</strong>. Nel gioco iniziale ti ho chiesto di simulare il lancio di una moneta, cercando di imitarne una vera il più fedelmente possibile e ora andremo a vedere quali sono stati i risultati e se il programma incaricato di prevedere la tua prossima mossa ti ha battuto.</p>
 
     <!-- testo diverso se il lettore ha giocato o ha scelto di leggere e basta: lo scrive JavaScript -->
     <p id="testo-confronto"></p>
@@ -377,9 +378,9 @@
     <div class="grafico" id="ch-oracolo"></div>
 
     <!-- spiegazione fonti -->
-    <p>L'idea della finta simulazione viene da un vecchio articolo del <em>New York Times</em> del 1998, firmato da Malcolm W. Browne, in cui si parla del professor Theodore P. Hill, un matematico che chiese ai suoi studenti di fare una cosa, una volta a casa: lanciare una moneta 200 volte e segnare i risultati, oppure far finta di farlo e inventare 200 risultati. Il giorno successivo, di fronte alla sorpresa degli studenti, Hill riusciva a riconoscere quasi tutti coloro che avevano inventato i risultati.</p>
+    <p>L'idea della finta simulazione viene da un vecchio articolo del <em>New York Times</em> del 1998, firmato da Malcolm W. Browne, in cui si parla del professor <strong>Theodore P. Hill, un matematico che chiese ai suoi studenti di fare una cosa, una volta a casa: lanciare una moneta 200 volte e segnare i risultati, oppure far finta di farlo e inventare 200 risultati. Il giorno successivo, di fronte alla sorpresa degli studenti, Hill riusciva a riconoscere quasi tutti coloro che avevano inventato i risultati.</strong></p>
 
-    <p>L'indizio su cui si basa Hill è la serie più lunga: in 200 lanci veri è quasi certo che prima o poi escano almeno sei teste o sei croci di fila, mentre chi inventa raramente si spinge così in là. Anche i cambi tra testa e croce, però, tradiscono chi inventa, perché tende ad alternare troppo. Sulla stessa intuizione, cioè che chi inventa una sequenza ha abitudini prevedibili, Scott Aaronson, professore e divulgatore scientifico, ha costruito un «oracolo» che prova a indovinare quale tasto, tra due, una persona premerà, in base a quelli già premuti: il programma che aveva il compito di prevedere la tua mossa nasce qui.</p>
+    <p>L'indizio su cui si basa Hill è la serie più lunga: in 200 lanci veri è quasi certo che prima o poi escano almeno sei teste o sei croci di fila, mentre chi inventa raramente si spinge così in là; anche i cambi tra testa e croce, però, tradiscono chi inventa, perché tende ad alternare troppo. Sulla stessa intuizione, cioè che chi inventa una sequenza ha abitudini prevedibili, <strong>Scott Aaronson, professore e divulgatore scientifico, ha costruito un «oracolo» che prova a indovinare quale tasto, tra due, una persona premerà, in base a quelli già premuti: il programma che aveva il compito di prevedere la tua mossa nasce qui</strong>.</p>
     <p class="nota"><button class="link" id="rigioca" type="button">Vuoi provare a rilanciare la moneta?</button></p>
   </div>
 
@@ -676,7 +677,7 @@ const quota = (arr, condizione) => arr.filter(condizione).length / arr.length;
 // - quella per chi legge e basta, che non ha fatto il gioco e non può essere stato "battuto".
 const testoGiocoOriginale = document.getElementById("testo-gioco").innerHTML;
 const testoGiocoEsempio =
-  `Generare numeri casuali non è qualcosa di semplice e spesso un essere umano fallisce nel tentativo di provarci. ` +
+  `<strong>Generare numeri casuali non è qualcosa di semplice e spesso un essere umano fallisce nel tentativo di provarci</strong>. ` +
   `Nel gioco iniziale chiedevo di simulare il lancio di una moneta, cercando di imitarne una vera il più fedelmente ` +
   `possibile: ora andremo a vedere i risultati di una sequenza di esempio e se il programma incaricato di prevedere ` +
   `la mossa successiva l'ha battuta.`;
@@ -736,9 +737,9 @@ function mostraRisultati(scorri = true) {
 
   // --- grafico 1: serie più lunga ---
   document.getElementById("testo-serie").innerHTML =
-    `La prima differenza sono le serie di risultati uguali. Chi inventa una sequenza tende a evitarle: ` +
+    `<strong>La prima differenza sono le serie di risultati uguali. Chi inventa una sequenza tende a evitarle: ` +
     `sei teste di fila sembrano «troppe» per essere casuali. Invece, su cento lanci veri, la serie più lunga ` +
-    `è quasi sempre di 5 lanci o più. ${es ? "Quella dell'esempio" : "La tua"} è di <span class="tu">${tu.serie}</span>; ` +
+    `è quasi sempre di 5 lanci o più</strong>. ${es ? "Quella dell'esempio" : "La tua"} è di <span class="tu">${tu.serie}</span>; ` +
     `una moneta vera si ferma a ${tu.serie} o meno ${quanto(quota(R.serie, (v) => v <= tu.serie))}. ` +
     `Il grafico mostra quanto spesso capita ogni lunghezza in ${fmt(SIM)} sequenze vere simulate; ` +
     `${es ? "la linea nera è l'esempio" : "la linea nera sei tu"}.`;
@@ -749,9 +750,9 @@ function mostraRisultati(scorri = true) {
 
   // --- grafico 2: cambi ---
   document.getElementById("testo-cambi").innerHTML =
-    `Il secondo indizio sono i cambi. Con una moneta vera, dopo una testa viene una croce una volta su due: ` +
-    `in cento lanci ci si aspettano circa 50 cambi. Chi inventa tende ad alternare di più, per «compensare» ` +
-    `le serie che evita. ${es ? "L'esempio cambia" : "Tu hai cambiato"} <span class="tu">${tu.cambi} volte</span>: ` +
+    `<strong>Il secondo indizio sono i cambi. Con una moneta vera, dopo una testa viene una croce una volta su due: ` +
+    `in cento lanci ci si aspettano circa 50 cambi, ma chi inventa tende ad alternare di più, per «compensare» ` +
+    `le serie che evita</strong>. ${es ? "L'esempio cambia" : "Tu hai cambiato"} <span class="tu">${tu.cambi} volte</span>: ` +
     `la linea nera mostra dove ${es ? "cade" : "cadi"}.`;
   istogramma(document.getElementById("ch-cambi"), {
     valori: R.cam, dominio: [25, 75], tuo: tu.cambi, etichettaX: "numero di cambi", etichettaTu: chi,
@@ -765,19 +766,19 @@ function mostraRisultati(scorri = true) {
   const conChi = es ? "Con l'esempio" : "Con te";
   let esito;
   if (tu.oracolo > R.iOra[1]) {
-    esito = `${conChi} ne ha indovinati ${n}: con una moneta vera non ci arriva quasi mai.`;
+    esito = `${conChi} ne ha indovinati ${n} e con una moneta vera non ci arriva quasi mai.`;
   } else if (tu.oracolo > 53) {
     esito = `${conChi} ne ha indovinati ${n}: un po' più che con una moneta, ma non abbastanza per dire che ti ha letto nel pensiero.`;
   } else {
     esito = `${conChi} ne ha indovinati ${n}, quanto con una moneta vera: non gli hai lasciato abitudini da imparare, e non è da tutti.`;
   }
   document.getElementById("testo-oracolo").innerHTML =
-    `Poche serie lunghe e troppi cambi sono le abitudini più comuni, e le abitudini si possono prevedere. ` +
+    `<strong>Poche serie lunghe e troppi cambi sono le abitudini più comuni e possono essere previste</strong>. ` +
     (es
-      ? `Durante il gioco, un piccolo programma prova a indovinare ogni lancio prima che venga scritto. ` +
-        `Non sa niente di chi gioca: si ricorda solo cosa è stato scritto dopo ogni gruppo di lanci e scommette che si ripeterà. `
-      : `Il programma che indovinava i tuoi lanci non sa niente di te: si ricorda solo cosa hai scritto dopo ogni gruppo di lanci ` +
-        `e scommette che lo rifarai. `) +
+      ? `Durante il gioco, un piccolo programma provava a indovinare ogni lancio prima che venisse scelto, usando solamente ` +
+        `gli esiti selezionati precedentemente dopo ogni gruppo di lanci e decidendo che si ripeterà. `
+      : `Durante il gioco, un piccolo programma provava a indovinare ogni tuo lancio prima che lo scegliessi, usando solamente ` +
+        `gli esiti che avevi selezionato dopo ogni gruppo di lanci e scommettendo che li avresti ripetuti. `) +
     `${esito} Il grafico mostra il suo punteggio su ${fmt(R.ora.length)} sequenze vere, dove resta intorno a 50.`;
   istogramma(document.getElementById("ch-oracolo"), {
     valori: R.ora, dominio: [30, 80], tuo: tu.oracolo, etichettaX: "lanci previsti su 100", etichettaTu: chi,

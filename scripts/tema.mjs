@@ -42,7 +42,7 @@ export const CSS_TEMA = {
   .cifre, .griglia, .cella, table, .stato, .asse text, .segno text, .leg { font-variant-numeric: tabular-nums; }
   .barra-titolo { font-size: .85rem !important; font-weight: 600 !important; letter-spacing: 0 !important; text-transform: none !important; }
   .tasti button { text-transform: none !important; letter-spacing: 0 !important; }
-  .tu { background: ${T.ev}; color: #000 !important; padding: 0 .15em; }
+  .tu, mark { background: ${T.ev}; color: #000 !important; padding: 0 .15em; }
   td.tu { background: none; color: ${T.testo} !important; }
   .confronto .cella.serie-tu { color: #fff !important; }
   .g-caso .cella { color: ${T.testo2} !important; }                                  /* le lettere della moneta vera: --macchina qui è troppo chiaro */
