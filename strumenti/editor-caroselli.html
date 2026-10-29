@@ -2,8 +2,8 @@
 <!--
   EDITOR DEI CAROSELLI DI ÀLEA: si apre con un doppio clic (funziona anche senza internet, tranne i caratteri).
   A sinistra le slide, al centro l'anteprima, a destra le impostazioni della slide scelta.
-  Ogni slide è disegnata su un <canvas> 1080×1350 nello stile dei caroselli (foto in bianco e nero a tutta pagina,
-  testo con le righe evidenziate, crediti sulle foto, chiusura con «Leggi tutto su alea.news»).
+  Ogni slide è disegnata su un <canvas> 1080×1350 nello stile dei caroselli (foto in bianco e nero a tutta pagina
+  oppure rimpicciolite e spostate, come un ritaglio sul fondo; testo con le righe evidenziate, crediti sulle foto, chiusura con «Leggi tutto su alea.news»).
   «Scarica le slide» salva un PNG per slide; «Salva progetto» salva un file .json da riaprire con «Apri progetto».
   Il lavoro si salva anche da solo nel browser (finché le foto non sono troppe).
 -->
@@ -156,12 +156,26 @@ function righe(ctx, testo, maxW) {
   return out;
 }
 
-// foto a tutta pagina: una sola o una griglia di `col` colonne; ognuna col suo credito in basso a destra
+// riquadro delle foto in px della slide: `s.fb` = { x, y, w, h }; senza fb = tutta pagina
+function riquadro(s) {
+  if (s.fb) return s.fb;
+  if (s.fw != null) {                                   // progetti salvati con i vecchi cursori in percentuale
+    const w = W * s.fw / 100, h = H * (s.fh ?? 100) / 100;
+    return { x: (W - w) * (s.fx ?? 50) / 100, y: (H - h) * (s.fy ?? 50) / 100, w, h };
+  }
+  return { x: 0, y: 0, w: W, h: H };
+}
+
+// foto: una sola o una griglia di `col` colonne, dentro il riquadro `riquadro(s)` inclinato di `rot` gradi;
+// ogni foto col suo credito in basso a destra
 function disegnaFoto(ctx, s, T) {
   const n = s.foto.length; if (!n) return;
-  const col = Math.min(s.col || 1, n), rig = Math.ceil(n / col), w = W / col, h = H / rig;
+  const { x: bx, y: by, w: bw, h: bh } = riquadro(s);
+  const col = Math.min(s.col || 1, n), rig = Math.ceil(n / col), w = bw / col, h = bh / rig;
+  ctx.save();
+  if (s.rot) { ctx.translate(bx + bw / 2, by + bh / 2); ctx.rotate(s.rot * Math.PI / 180); ctx.translate(-bx - bw / 2, -by - bh / 2); }
   s.foto.forEach((f, i) => {
-    const x = (i % col) * w, y = Math.floor(i / col) * h, img = immagine(f.src);
+    const x = bx + (i % col) * w, y = by + Math.floor(i / col) * h, img = immagine(f.src);
     if (img) {
       // ritaglio "cover": riempie la cella, e `fuoco` sposta la foto in verticale (0 = alto, 100 = basso)
       const k = Math.max(w / img.naturalWidth, h / img.naturalHeight), sw = w / k, sh = h / k;
@@ -170,19 +184,23 @@ function disegnaFoto(ctx, s, T) {
       ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h); ctx.restore();
     }
     if (f.credito) {
-      ctx.font = '13px "IBM Plex Mono"'; ctx.letterSpacing = "0px";
+      ctx.font = '14px "Noto Sans"'; ctx.letterSpacing = "0px";
       const tw = Math.min(ctx.measureText(f.credito).width, w - 16);
       ctx.fillStyle = T.fondo; ctx.fillRect(x + w - tw - 16, y + h - 22, tw + 16, 22);
       ctx.fillStyle = T.testo2; ctx.textBaseline = "alphabetic"; ctx.fillText(f.credito, x + w - tw - 8, y + h - 7, w - 16);
     }
   });
+  ctx.restore();
 }
 
-// blocco di testo: restituisce l'altezza e, se `y` è dato, lo disegna a partire da y
+// blocco di testo: a sinistra in x = M e largo quanto la slide, oppure dove l'hai trascinato (`s.tb` = { x, y, w })
+const xTesto = (s) => s.tb ? s.tb.x : M;
+const wTesto = (s) => s.tb ? s.tb.w : W - 2 * M - 24;
+// restituisce l'altezza e, se `y` è dato, lo disegna a partire da y
 function bloccoTesto(ctx, s, T, E, y) {
-  const st = s.stile, dim = s.dim, c = CARATTERI[st];
+  const st = s.stile, dim = s.dim, c = CARATTERI[st], M = xTesto(s);   // M qui è il margine sinistro del blocco
   font(ctx, st, dim);
-  const rr = righe(ctx, s.testo || "", W - 2 * M - 24), lh = dim * c.interlinea;
+  const rr = righe(ctx, s.testo || "", wTesto(s)), lh = dim * c.interlinea;
   if (y == null) return rr.length * lh;
   const padX = dim * 0.15, alto = dim * 0.98, basso = dim * 0.28;   // misure della banda attorno a una riga
   rr.forEach((riga, i) => {
@@ -215,6 +233,20 @@ function bloccoRitaglio(s, T, y, ctx) {
   return h;
 }
 
+// dove sta il blocco di testo: { x, y, w, h }. Il ritaglio e l'invito della chiusura vengono subito sotto.
+// Senza `s.tb` l'intero gruppo (testo + ritaglio + invito) si mette in alto, al centro o in basso secondo `s.pos`.
+const GAP = 48;
+function posTesto(ctx, s) {
+  const T = FONDI[P.fondo], E = EVID[P.ev];
+  ctx.save(); const h = s.testo ? bloccoTesto(ctx, s, T, E) : 0; ctx.restore();
+  if (s.tb) return { x: s.tb.x, y: s.tb.y, w: s.tb.w, h };
+  const hRit = s.tipo === "testo" ? bloccoRitaglio(s, T) : 0;
+  const hInv = s.tipo === "chiusura" ? 64 * 1.2 : 0;
+  const tot = h + (hRit ? GAP + hRit : 0) + (hInv ? GAP + hInv : 0);
+  const y = s.pos === "alto" ? 64 : s.pos === "basso" ? H - 76 - tot : (H - tot) / 2;
+  return { x: M, y, w: wTesto(s), h };
+}
+
 function disegna(ctx, s) {
   const T = FONDI[P.fondo], E = EVID[P.ev];
   ctx.save();
@@ -222,14 +254,9 @@ function disegna(ctx, s) {
   ctx.fillStyle = T.fondo; ctx.fillRect(0, 0, W, H);
   if (s.tipo !== "chiusura" && s.tipo !== "testo") disegnaFoto(ctx, s, T);
 
-  // altezza totale del contenuto (testo + eventuale ritaglio + invito della chiusura), per posizionarlo
-  const GAP = 48;
-  const hTesto = s.testo ? bloccoTesto(ctx, s, T, E) : 0;
-  const hRit = s.tipo === "testo" ? bloccoRitaglio(s, T) : 0;
-  const hInv = s.tipo === "chiusura" ? 64 * 1.2 : 0;
-  const tot = hTesto + (hRit ? GAP + hRit : 0) + (hInv ? GAP + hInv : 0);
-  let y = s.pos === "alto" ? 64 : s.pos === "basso" ? H - 76 - tot : (H - tot) / 2;
-
+  const { y: yTesto, h: hTesto } = posTesto(ctx, s);
+  let y = yTesto;
+  const hRit = s.tipo === "testo" ? bloccoRitaglio(s, T) : 0, hInv = s.tipo === "chiusura" ? 64 * 1.2 : 0;
   if (s.testo) { bloccoTesto(ctx, s, T, E, y); y += hTesto + GAP; }
   if (hRit) { bloccoRitaglio(s, T, y, ctx); y += hRit + GAP; }
   if (hInv) {                                           // «Leggi tutto su alea.news», l'unica cosa in lime
@@ -248,12 +275,149 @@ const $ = (id) => document.getElementById(id);
 const tela = $("tela"), ctxTela = tela.getContext("2d");
 
 function disegnaTutto() {
-  disegna(ctxTela, P.slide[scelta]);
+  disegnaTela();
   document.querySelectorAll(".mini canvas").forEach((c, i) => {
     const g = c.getContext("2d"); g.save(); g.scale(c.width / W, c.height / H); disegna(g, P.slide[i]); g.restore();
   });
   salvaLocale();
 }
+
+// --- foto e testo trascinabili nell'anteprima ----------------------------------------------------
+// Clic su un elemento = lo selezioni (cornice blu, solo nell'anteprima: mai nei PNG scaricati).
+// Foto: si trascina, i quadratini la ridimensionano (Maiusc = stesse proporzioni), la rotellina la ingrandisce.
+// Testo: si trascina, i quadratini sui lati cambiano la larghezza (il testo va a capo da solo),
+// quelli d'angolo e la rotellina cambiano la grandezza del carattere.
+let sel = null, presa = null;                            // sel: "foto", "testo" o null
+const conFotoSlide = (s) => (s.tipo === "copertina" || s.tipo === "foto") && s.foto.length > 0;
+const scalaTela = () => W / tela.getBoundingClientRect().width;          // px della slide per px dello schermo
+const MANIGLIE = {
+  foto: [[0, 0], [.5, 0], [1, 0], [1, .5], [1, 1], [.5, 1], [0, 1], [0, .5]],
+  testo: [[0, 0], [1, 0], [1, 1], [0, 1], [0, .5], [1, .5]],
+};
+
+// rettangolo dell'elemento in px della slide, con la sua inclinazione
+function rett(s, cosa) {
+  if (cosa === "foto") return { ...riquadro(s), rot: s.rot || 0 };
+  const t = posTesto(ctxTela, s);
+  return { x: t.x, y: t.y, w: t.w, h: Math.max(t.h, s.dim), rot: 0 };
+}
+
+function disegnaTela() {
+  const s = P.slide[scelta];
+  disegna(ctxTela, s);
+  if (sel === "foto" && !conFotoSlide(s) || sel === "testo" && !s.testo) sel = null;
+  if (!sel) return;
+  const b = rett(s, sel), k = scalaTela(), lato = 12 * k;
+  ctxTela.save();
+  ctxTela.translate(b.x + b.w / 2, b.y + b.h / 2); ctxTela.rotate(b.rot * Math.PI / 180);
+  ctxTela.strokeStyle = "#1a73e8"; ctxTela.lineWidth = 2 * k;
+  ctxTela.strokeRect(-b.w / 2, -b.h / 2, b.w, b.h);
+  for (const [u, v] of MANIGLIE[sel]) {
+    const x = -b.w / 2 + u * b.w - lato / 2, y = -b.h / 2 + v * b.h - lato / 2;
+    ctxTela.fillStyle = "#fff"; ctxTela.fillRect(x, y, lato, lato); ctxTela.strokeRect(x, y, lato, lato);
+  }
+  ctxTela.restore();
+}
+
+// punto del mouse: in px della slide (px, py) e negli assi del rettangolo b, con origine nel suo angolo in alto a sinistra (x, y)
+function punto(e, b) {
+  const r = tela.getBoundingClientRect(), k = scalaTela();
+  const px = (e.clientX - r.left) * k, py = (e.clientY - r.top) * k;
+  const a = -(b.rot || 0) * Math.PI / 180, dx = px - b.x - b.w / 2, dy = py - b.y - b.h / 2;
+  return { x: dx * Math.cos(a) - dy * Math.sin(a) + b.w / 2, y: dx * Math.sin(a) + dy * Math.cos(a) + b.h / 2, px, py };
+}
+// cosa c'è sotto il mouse: { cosa, m } con m = una maniglia [u, v] oppure "dentro"; null se niente.
+// Prima le maniglie dell'elemento scelto, poi il testo (che sta sopra la foto), poi la foto.
+function bersaglio(e, s) {
+  const raggio = 14 * scalaTela(), presenti = [s.testo && "testo", conFotoSlide(s) && "foto"].filter(Boolean);
+  if (sel && presenti.includes(sel)) {
+    const b = rett(s, sel), p = punto(e, b);
+    for (const m of MANIGLIE[sel]) if (Math.abs(p.x - m[0] * b.w) < raggio && Math.abs(p.y - m[1] * b.h) < raggio) return { cosa: sel, m };
+  }
+  for (const cosa of presenti) {
+    const b = rett(s, cosa), p = punto(e, b);
+    if (p.x >= 0 && p.x <= b.w && p.y >= 0 && p.y <= b.h) return { cosa, m: "dentro" };
+  }
+  return null;
+}
+const CURSORI = { "0,0": "nwse", "1,1": "nwse", "1,0": "nesw", "0,1": "nesw", ".5,0": "ns", ".5,1": "ns", "0,.5": "ew", "1,.5": "ew" };
+const cursore = (t) => !t ? "" : t.m === "dentro" ? "move" : CURSORI[t.m.map((v) => (v === .5 ? ".5" : v)).join(",")] + "-resize";
+
+// il testo, la prima volta che lo tocchi, passa da «in alto / al centro / in basso» a una posizione libera
+function liberaTesto(s) { if (!s.tb) { const t = posTesto(ctxTela, s); s.tb = { x: t.x, y: t.y, w: t.w }; } }
+const mostraDim = (s) => { if ($("p-dim")) $("p-dim").value = s.dim; };
+
+tela.addEventListener("pointerdown", (e) => {
+  const s = P.slide[scelta], t = bersaglio(e, s);
+  sel = t ? t.cosa : null;
+  if (t) {
+    if (t.cosa === "testo") liberaTesto(s);
+    const b = rett(s, t.cosa);
+    presa = { ...t, b0: b, p0: punto(e, b), dim0: s.dim };
+    tela.setPointerCapture(e.pointerId);
+  }
+  disegnaTela();
+});
+
+tela.addEventListener("pointermove", (e) => {
+  const s = P.slide[scelta];
+  if (!presa) { tela.style.cursor = cursore(bersaglio(e, s)); return; }
+  const { cosa, m, b0, p0, dim0 } = presa, p = punto(e, b0);
+  const mx = p.px - p0.px, my = p.py - p0.py;
+  // spostamento del mouse negli assi dell'elemento (la foto può essere inclinata)
+  const a = -b0.rot * Math.PI / 180, dx = mx * Math.cos(a) - my * Math.sin(a), dy = mx * Math.sin(a) + my * Math.cos(a);
+
+  if (m === "dentro") {
+    if (cosa === "foto") { s.fb = { x: b0.x + mx, y: b0.y + my, w: b0.w, h: b0.h }; delete s.fw; }
+    else s.tb = { x: b0.x + mx, y: b0.y + my, w: b0.w };
+  } else if (cosa === "foto") {
+    // il lato opposto alla maniglia resta fermo
+    const [u, v] = m;
+    let w = b0.w + (u === 1 ? dx : u === 0 ? -dx : 0), h = b0.h + (v === 1 ? dy : v === 0 ? -dy : 0);
+    if (e.shiftKey && u !== .5 && v !== .5) { const r = b0.w / b0.h; if (w / h > r) h = w / r; else w = h * r; }
+    w = Math.max(80, w); h = Math.max(80, h);
+    // il centro si sposta di metà della variazione, verso la maniglia (negli assi inclinati)
+    const sx = (u === 1 ? 1 : u === 0 ? -1 : 0) * (w - b0.w) / 2, sy = (v === 1 ? 1 : v === 0 ? -1 : 0) * (h - b0.h) / 2;
+    const r = b0.rot * Math.PI / 180;
+    const cx = b0.x + b0.w / 2 + sx * Math.cos(r) - sy * Math.sin(r), cy = b0.y + b0.h / 2 + sx * Math.sin(r) + sy * Math.cos(r);
+    s.fb = { x: cx - w / 2, y: cy - h / 2, w, h }; delete s.fw;
+  } else {
+    const [u, v] = m;
+    if (v === .5) {                                      // lati: solo la larghezza
+      const w = Math.max(120, b0.w + (u === 1 ? dx : -dx));
+      s.tb = { x: u === 0 ? b0.x + b0.w - w : b0.x, y: b0.y, w };
+    } else {                                             // angoli: carattere e larghezza in proporzione
+      const f = Math.max(0.2, (b0.w + (u === 1 ? dx : -dx)) / b0.w);
+      s.dim = Math.round(Math.min(240, Math.max(16, dim0 * f)));
+      const k = s.dim / dim0, w = b0.w * k, h = b0.h * k;
+      s.tb = { x: u === 0 ? b0.x + b0.w - w : b0.x, y: v === 0 ? b0.y + b0.h - h : b0.y, w };
+      mostraDim(s);
+    }
+  }
+  disegnaTela();                                         // durante il trascinamento solo l'anteprima, per essere fluidi
+});
+const lascia = () => { if (presa) { presa = null; aggiorna(); } };
+tela.addEventListener("pointerup", lascia);
+tela.addEventListener("pointercancel", lascia);
+
+// rotellina: sulla foto la ingrandisce attorno al centro, sul testo cambia la grandezza del carattere
+tela.addEventListener("wheel", (e) => {
+  const s = P.slide[scelta], t = bersaglio(e, s);
+  if (!t) return;
+  e.preventDefault();
+  sel = t.cosa;
+  const su = e.deltaY < 0;
+  if (t.cosa === "foto") {
+    const b = riquadro(s), f = su ? 1.05 : 1 / 1.05, w = Math.max(80, b.w * f), h = Math.max(80, b.h * f);
+    s.fb = { x: b.x + (b.w - w) / 2, y: b.y + (b.h - h) / 2, w, h }; delete s.fw;
+  } else {
+    liberaTesto(s);
+    s.dim = Math.min(240, Math.max(16, s.dim + (su ? 2 : -2))); mostraDim(s);
+  }
+  disegnaTela();
+  clearTimeout(tela._t); tela._t = setTimeout(disegnaTutto, 300);
+}, { passive: false });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && sel) { sel = null; disegnaTela(); } });
 
 function elenco() {
   $("miniature").innerHTML = "";
@@ -261,7 +425,7 @@ function elenco() {
     const d = document.createElement("div");
     d.className = "mini" + (i === scelta ? " scelta" : "");
     d.innerHTML = `<canvas width="216" height="270"></canvas><span class="num">${i + 1} · ${s.tipo}</span>`;
-    d.onclick = () => { scelta = i; aggiorna(); };
+    d.onclick = () => { scelta = i; sel = null; aggiorna(); };
     $("miniature").append(d);
   });
 }
@@ -277,7 +441,8 @@ function pannello() {
       <button data-az="duplica">duplica</button><button data-az="elimina">elimina</button>
     </div>
     <div class="campo"><label>Testo</label><textarea id="p-testo">${esc(s.testo)}</textarea>
-      <div class="aiuto">==così== per evidenziare delle parole · a capo per un nuovo paragrafo${s.tipo === "chiusura" ? " · sotto compare «" + INVITO + "»" : ""}</div></div>
+      <div class="aiuto">Nell'anteprima puoi trascinare il testo; i quadratini sui lati cambiano la larghezza, quelli d'angolo e la rotellina la grandezza.<br>
+        ==così== per evidenziare delle parole · a capo per un nuovo paragrafo${s.tipo === "chiusura" ? " · sotto compare «" + INVITO + "»" : ""}</div></div>
     <div class="campo riga">
       <div style="flex:1"><label class="etichetta">Carattere</label><select id="p-stile">
         <option value="titolo">titolo (General Sans)</option><option value="testo">testo (Noto Sans)</option></select></div>
@@ -285,7 +450,8 @@ function pannello() {
     </div>
     <div class="campo riga">
       <div style="flex:1"><label class="etichetta">Posizione</label><select id="p-pos">
-        <option value="alto">in alto</option><option value="centro">al centro</option><option value="basso">in basso</option></select></div>
+        <option value="alto">in alto</option><option value="centro">al centro</option><option value="basso">in basso</option>
+        ${s.tb ? `<option value="libera">dove l'hai trascinato</option>` : ""}</select></div>
       <div style="flex:1"><label class="etichetta">Sfondo delle righe</label><select id="p-bande">
         <option value="evidenziatore">evidenziatore</option><option value="fondo">colore del fondo</option><option value="nessuna">nessuno</option></select></div>
     </div>
@@ -298,20 +464,29 @@ function pannello() {
       <label class="riga" style="margin-top:18px"><input type="checkbox" id="p-bn" ${s.bn ? "checked" : ""}> bianco e nero</label>
     </div>
     <div class="campo"><label>Inquadratura verticale</label><input type="range" id="p-fuoco" min="0" max="100" value="${s.fuoco ?? 25}">
-      <div class="aiuto">A sinistra mostra la parte alta delle foto (le teste), a destra la parte bassa.</div></div>` : ""}
+      <div class="aiuto">A sinistra mostra la parte alta delle foto (le teste), a destra la parte bassa.</div></div>
+    <div class="campo"><label>Dimensione e posizione della foto</label>
+      <div class="aiuto" style="margin:0 0 8px">Clicca sulla foto nell'anteprima: trascinala per spostarla, tira i quadratini sui bordi per
+        ridimensionarla (con Maiusc mantiene le proporzioni), usa la rotellina per ingrandirla o rimpicciolirla.</div>
+      <div class="riga"><span class="etichetta" style="width:110px;flex:none;margin:0">Inclinazione</span><input type="range" id="p-rot" min="-6" max="6" step="0.5" value="${s.rot ?? 0}"></div>
+      <div class="comandi"><button id="p-pieno">tutta pagina</button></div></div>` : ""}
     ${s.tipo === "testo" ? `<hr>
     <div class="campo"><label>Ritaglio</label>
       ${s.ritaglio ? `<img src="${s.ritaglio.src}" style="width:100%;border:1px solid var(--linea)"><div class="comandi"><button id="p-rit-via">togli</button></div>` : ""}
       <label class="bottone">${s.ritaglio ? "cambia" : "+ scegli un'immagine"}<input type="file" id="p-rit-in" accept="image/*" hidden></label>
       <div class="aiuto">Una schermata di un grafico o di un pezzo dell'articolo (es. da telefono, con lo stesso fondo). I bordi vuoti si tagliano da soli.</div></div>` : ""}
   `;
-  $("p-stile").value = s.stile; $("p-pos").value = s.pos; $("p-bande").value = s.bande;
+  $("p-stile").value = s.stile; $("p-pos").value = s.tb ? "libera" : s.pos; $("p-bande").value = s.bande;
   const lega = (id, campo, conv = (v) => v, ev = "input") => $(id)?.addEventListener(ev, (e) => {
     s[campo] = conv(e.target.type === "checkbox" ? e.target.checked : e.target.value); disegnaTutto();
   });
   lega("p-testo", "testo"); lega("p-stile", "stile", String, "change"); lega("p-dim", "dim", Number);
-  lega("p-pos", "pos", String, "change"); lega("p-bande", "bande", String, "change");
+  // scegliere «in alto / al centro / in basso» rimette il testo nella sua posizione standard
+  $("p-pos").addEventListener("change", (e) => { if (e.target.value !== "libera") { s.pos = e.target.value; delete s.tb; aggiorna(); } });
+  lega("p-bande", "bande", String, "change");
   lega("p-col", "col", Number); lega("p-bn", "bn", Boolean, "change"); lega("p-fuoco", "fuoco", Number);
+  lega("p-rot", "rot", Number);
+  if ($("p-pieno")) $("p-pieno").onclick = () => { delete s.fb; delete s.fw; s.rot = 0; aggiorna(); };
 
   p.querySelectorAll("[data-az]").forEach((b) => b.onclick = () => azione(b.dataset.az));
   if (conFoto) {
@@ -415,7 +590,7 @@ document.querySelectorAll(".aggiungi [data-tipo]").forEach((b) => b.onclick = ()
 // avvio: riprende il lavoro salvato nel browser, poi aspetta i caratteri prima di disegnare
 try { const v = JSON.parse(localStorage.getItem("alea-editor")); if (v?.slide?.length) P = v; } catch (e) {}
 sincronizzaTesta(); aggiorna();
-Promise.all(['600 100px "General Sans"', '400 40px "Noto Sans"', '13px "IBM Plex Mono"'].map((f) => document.fonts.load(f).catch(() => {})))
+Promise.all(['600 100px "General Sans"', '400 40px "Noto Sans"'].map((f) => document.fonts.load(f).catch(() => {})))
   .then(disegnaTutto);
 </script>
 </body>

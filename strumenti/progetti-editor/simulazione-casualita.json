@@ -1,0 +1,89 @@
+{
+ "titolo": "Non siamo bravi a simulare la casualità",
+ "kicker": "",
+ "sommario": "E lo possiamo verificare facendo una prova",
+ "data": "2026-10-10",
+ "indirizzo": "simulazione-casualita",
+ "fondo": "bianco",
+ "accento": "#d4ff3a",
+ "intro": {
+  "tipo": "nessuna"
+ },
+ "blocchi": [
+  {
+   "tipo": "html",
+   "codice": "<p style=\"border: 1px dashed #999; padding: 12px 14px; font-size: .9rem; color: #5e5d58\">Qui, prima del titolo, c'era il gioco dei cento lanci. Con l'editor non si può rifare: è nella pagina originale (Desktop/moneta/moneta.html). Questa versione usa una sequenza di esempio, quella che vede chi sceglie «leggere e basta».</p>"
+  },
+  {
+   "tipo": "paragrafo",
+   "testo": "**Nella seconda metà degli anni Quaranta i metodi Monte Carlo iniziarono a prendere sempre più piede all'interno della ricerca scientifica**, specialmente nel campo della fisica, della statistica, della ricerca operativa e, in generale, nella matematica applicata. Questi approcci si ponevano come obiettivo di **risolvere determinati problemi numerici, specialmente in sistemi complessi, basandosi sul campionamento casuale, con l'idea che un preciso risultato si possa approssimare abbastanza bene facendo tanti tentativi** e facendo emergere uno schema dalle varie prove casuali eseguite. Del tipo, prova e vedi.\n\nIl problema principale era che alla base del metodo Monte Carlo c'è la ==casualità== e, se ancora oggi la maggior parte dei numeri «casuali» generati dai computer è in realtà pseudo-casuale, cioè prodotta da un algoritmo che, partendo dallo stesso punto, restituisce sempre la stessa sequenza, negli anni Quaranta la situazione era ancora più complessa. **Nel 1947 il progetto RAND, nato dentro la Douglas Aircraft Company, costruì un apparecchio elettronico per generare un milione di cifre casuali** e 100.000 valori di una distribuzione normale, derivati dalle prime 500.000 cifre del campione. Nel 1955 la RAND Corporation, diventata nel frattempo un ente indipendente, pubblicò il libro *A Million Random Digits with 100,000 Normal Deviates*, dove vennero inserite le cifre generate, creando un gold standard per le simulazioni Monte Carlo."
+  },
+  {
+   "tipo": "html",
+   "codice": "<pre style=\"font: .78rem/1.55 'Noto Sans', sans-serif; font-variant-numeric: tabular-nums; overflow: hidden; margin: 0 0 6px\">00000   42750 57111 87907 77893 82412 64874\n00001   24593 11028 26675 69898 03478 86781\n00002   08368 15213 37750 06347 54274 65597\n00003   40484 37736 67089 90031 23853 90635\n00004   25783 56175 40293 58473 25814 75794\n00005   51815 20386 69369 62420 74333 19512</pre>"
+  },
+  {
+   "tipo": "paragrafo",
+   "testo": "*Una pagina come quelle del libro: a sinistra c'è il numero di riga, mentre a destra i gruppi di cifre simulate.*"
+  },
+  {
+   "tipo": "paragrafo",
+   "testo": "**Generare numeri casuali non è qualcosa di semplice e spesso un essere umano fallisce nel tentativo di provarci**. Nel gioco iniziale chiedevo di simulare il lancio di una moneta, cercando di imitarne una vera il più fedelmente possibile: ora andremo a vedere i risultati di una sequenza di esempio e se il programma incaricato di prevedere la mossa successiva l'ha battuta.\n\nVisto che hai scelto di leggere e basta, usiamo una sequenza di esempio, costruita con le abitudini più comuni di chi inventa. Eccola accanto a cento lanci di una moneta vera."
+  },
+  {
+   "tipo": "html",
+   "codice": "<div style=\"display: grid; grid-template-columns: 1fr 1fr; gap: 20px\">\n<div><p style=\"font-weight: 600; margin: 0 0 6px\">la sequenza di esempio</p>\n<div style=\"display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; font-weight: 700; font-size: 13px; text-align: center\"><span>T</span><span>T</span><span>C</span><span>T</span><span>C</span><span>C</span><span>T</span><span>T</span><span>C</span><span>C</span><span>C</span><span>T</span><span>C</span><span>T</span><span>C</span><span>T</span><span>T</span><span>C</span><span>T</span><span>C</span><span>T</span><span>T</span><span>C</span><span>C</span><span>T</span><span>C</span><span>T</span><span>T</span><span>C</span><span>T</span><span>C</span><span>T</span><span>C</span><span>T</span><span>T</span><span>T</span><span>T</span><span>C</span><span>T</span><span>T</span><span>T</span><span>C</span><span>T</span><span>C</span><span>T</span><span>T</span><span>C</span><span>T</span><span>C</span><span>T</span><span>C</span><span>T</span><span>C</span><span>C</span><span>C</span><span>T</span><span>T</span><span>C</span><span>T</span><span>C</span><span>C</span><span>T</span><span>T</span><span>T</span><span>C</span><span>C</span><span>C</span><span>T</span><span>C</span><span>T</span><span>C</span><span>C</span><span>T</span><span>C</span><span>T</span><span>C</span><span>C</span><span>T</span><span>T</span><span>T</span><span>C</span><span>T</span><span>C</span><span>T</span><span>C</span><span>C</span><span>C</span><span>C</span><span>T</span><span>C</span><span>C</span><span>T</span><span>C</span><span>C</span><span>T</span><span>C</span><span>T</span><span>T</span><span>T</span><span>T</span></div></div>\n<div><p style=\"font-weight: 600; margin: 0 0 6px\">una moneta vera</p>\n<div style=\"display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; font-weight: 700; font-size: 13px; text-align: center\"><span>T</span><span>T</span><span>C</span><span>C</span><span>T</span><span>T</span><span>T</span><span>T</span><span>C</span><span>T</span><span>C</span><span>C</span><span>C</span><span>T</span><span>C</span><span>T</span><span>T</span><span>C</span><span>C</span><span>C</span><span>T</span><span>C</span><span>C</span><span>T</span><span>T</span><span>T</span><span>T</span><span>C</span><span>C</span><span>C</span><span>T</span><span>C</span><span>C</span><span>C</span><span>T</span><span>T</span><span>T</span><span>T</span><span>C</span><span>C</span><span>C</span><span>T</span><span>C</span><span>C</span><span>T</span><span>T</span><span>C</span><span>T</span><span>T</span><span>C</span><span>T</span><span>T</span><span>T</span><span>T</span><span>C</span><span>T</span><span>C</span><span>C</span><span>C</span><span>C</span><span>C</span><span>T</span><span>T</span><span>C</span><span>C</span><span>C</span><span>C</span><span>C</span><span>C</span><span>C</span><span>T</span><span>T</span><span>C</span><span>C</span><span>C</span><span>C</span><span>C</span><span>T</span><span>T</span><span>T</span><span>C</span><span>T</span><span>C</span><span>C</span><span>C</span><span>T</span><span>C</span><span>C</span><span>T</span><span>T</span><span>C</span><span>T</span><span>C</span><span>C</span><span>C</span><span>T</span><span>T</span><span>C</span><span>T</span><span>T</span></div></div>\n</div>\n<table style=\"width: 100%; border-collapse: collapse; margin-top: 24px; font-size: .9rem; font-variant-numeric: tabular-nums\">\n<thead><tr><th></th><th>esempio</th><th>moneta vera</th><th>di solito, con una moneta*</th></tr></thead>\n<tbody><tr><td>teste</td><td>52</td><td>46</td><td>42–58</td></tr><tr><td>serie più lunga</td><td>4</td><td>7</td><td>5–10</td></tr><tr><td>cambi (da T a C o viceversa)</td><td>64</td><td>44</td><td>41–58</td></tr><tr><td>lanci previsti dal programma</td><td>59</td><td>44</td><td>42–58</td></tr></tbody>\n</table>\n<p style=\"font-size: .85rem; color: #5e5d58\">* L'intervallo in cui cade il 90% delle sequenze vere simulate.</p>"
+  },
+  {
+   "tipo": "paragrafo",
+   "testo": "**La prima differenza sono le serie di risultati uguali. Chi inventa una sequenza tende a evitarle: sei teste di fila sembrano «troppe» per essere casuali. Invece, su cento lanci veri, la serie più lunga è quasi sempre di 5 lanci o più**. Quella dell'esempio è di ==4==; una moneta vera si ferma a 4 o meno nel 3% dei casi. Il grafico mostra quanto spesso capita ogni lunghezza in 20.000 sequenze vere simulate; la colonna evidenziata è l'esempio."
+  },
+  {
+   "tipo": "grafico",
+   "gtipo": "colonne",
+   "titolo": "La serie più lunga in cento lanci",
+   "sottotitolo": "Quota di 20.000 sequenze vere simulate",
+   "csv": "Serie più lunga\tSequenze vere\n2\t0.0\n3\t0.0\n4\t2.8\n5\t16.6\n6\t26.3\n7\t22.7\n8\t14.5\n9\t8.3\n10\t4.3\n11\t2.2\n12\t1.0\n13\t0.5\n14\t0.3\n15\t0.2\n16\t0.1",
+   "evidenzia": "4",
+   "unita": "%",
+   "fonte": "simulazione Monte Carlo di àlea"
+  },
+  {
+   "tipo": "paragrafo",
+   "testo": "**Il secondo indizio sono i cambi. Con una moneta vera, dopo una testa viene una croce una volta su due: in cento lanci ci si aspettano circa 50 cambi, ma chi inventa tende ad alternare di più, per «compensare» le serie che evita**. L'esempio cambia ==64 volte==: la colonna evidenziata mostra dove cade."
+  },
+  {
+   "tipo": "grafico",
+   "gtipo": "colonne",
+   "titolo": "I cambi tra testa e croce in cento lanci",
+   "sottotitolo": "Quota di 20.000 sequenze vere simulate",
+   "csv": "Cambi\tSequenze vere\n25\t0.0\n26\t0.0\n27\t0.0\n28\t0.0\n29\t0.0\n30\t0.0\n31\t0.0\n32\t0.0\n33\t0.0\n34\t0.0\n35\t0.1\n36\t0.2\n37\t0.3\n38\t0.6\n39\t1.0\n40\t1.2\n41\t1.8\n42\t2.7\n43\t3.5\n44\t4.2\n45\t5.2\n46\t6.1\n47\t6.9\n48\t8.1\n49\t8.4\n50\t7.9\n51\t7.4\n52\t6.8\n53\t6.2\n54\t5.4\n55\t4.5\n56\t3.4\n57\t2.8\n58\t1.9\n59\t1.2\n60\t0.8\n61\t0.5\n62\t0.4\n63\t0.2\n64\t0.1\n65\t0.1\n66\t0.0\n67\t0.0\n68\t0.0\n69\t0.0\n70\t0.0\n71\t0.0\n72\t0.0\n73\t0.0\n74\t0.0\n75\t0.0",
+   "evidenzia": "64",
+   "unita": "%",
+   "fonte": "simulazione Monte Carlo di àlea"
+  },
+  {
+   "tipo": "paragrafo",
+   "testo": "**Poche serie lunghe e troppi cambi sono le abitudini più comuni e possono essere previste**. Durante il gioco, un piccolo programma provava a indovinare ogni lancio prima che venisse scelto, usando solamente gli esiti selezionati precedentemente dopo ogni gruppo di lanci e decidendo che si ripeterà. Con l'esempio ne ha indovinati ==59 su 100== e con una moneta vera non ci arriva quasi mai. Il grafico mostra il suo punteggio su 4000 sequenze vere, dove resta intorno a 50."
+  },
+  {
+   "tipo": "grafico",
+   "gtipo": "colonne",
+   "titolo": "Quanti lanci indovina il programma",
+   "sottotitolo": "Lanci previsti su 100, in 4000 sequenze vere simulate",
+   "csv": "Lanci previsti\tSequenze vere\n30\t0.0\n31\t0.0\n32\t0.0\n33\t0.0\n34\t0.1\n35\t0.1\n36\t0.1\n37\t0.4\n38\t0.4\n39\t0.6\n40\t0.8\n41\t1.9\n42\t2.4\n43\t3.1\n44\t3.6\n45\t4.6\n46\t4.9\n47\t6.2\n48\t7.2\n49\t7.9\n50\t8.3\n51\t7.8\n52\t8.1\n53\t7.4\n54\t5.5\n55\t4.9\n56\t4.3\n57\t3.1\n58\t2.2\n59\t1.7\n60\t1.1\n61\t0.8\n62\t0.3\n63\t0.2\n64\t0.1\n65\t0.1\n66\t0.0\n67\t0.0\n68\t0.0\n69\t0.0\n70\t0.0\n71\t0.0\n72\t0.0\n73\t0.0\n74\t0.0\n75\t0.0\n76\t0.0\n77\t0.0\n78\t0.0\n79\t0.0\n80\t0.0",
+   "evidenzia": "59",
+   "unita": "%",
+   "fonte": "simulazione Monte Carlo di àlea"
+  },
+  {
+   "tipo": "paragrafo",
+   "testo": "L'idea della finta simulazione viene da un vecchio articolo del *New York Times* del 1998, firmato da Malcolm W. Browne, in cui si parla del professor **Theodore P. Hill, un matematico che chiese ai suoi studenti di fare una cosa, una volta a casa: lanciare una moneta 200 volte e segnare i risultati, oppure far finta di farlo e inventare 200 risultati. Il giorno successivo, di fronte alla sorpresa degli studenti, Hill riusciva a riconoscere quasi tutti coloro che avevano inventato i risultati.**\n\nL'indizio su cui si basa Hill è la serie più lunga: in 200 lanci veri è quasi certo che prima o poi escano almeno sei teste o sei croci di fila, mentre chi inventa raramente si spinge così in là; anche i cambi tra testa e croce, però, tradiscono chi inventa, perché tende ad alternare troppo. Sulla stessa intuizione, cioè che chi inventa una sequenza ha abitudini prevedibili, **Scott Aaronson, professore e divulgatore scientifico, ha costruito un «oracolo» che prova a indovinare quale tasto, tra due, una persona premerà, in base a quelli già premuti: il programma che aveva il compito di prevedere la tua mossa nasce qui**."
+  },
+  {
+   "tipo": "nota",
+   "titolo": "Fonti e metodologia",
+   "testo": "### Fonti\n\nRAND Corporation, *A Million Random Digits with 100,000 Normal Deviates*, Free Press, 1955; riedizione RAND, 2001. Scheda e download gratuito delle cifre: [rand.org](https://www.rand.org/pubs/monograph_reports/MR1418.html).\n\nMalcolm W. Browne, «Following Benford's Law, or Looking Out for No. 1», *The New York Times*, 4 agosto 1998 ([nytimes.com](https://www.nytimes.com/1998/08/04/science/following-benford-s-law-or-looking-out-for-no-1.html); copia consultabile su [rexswain.com](https://rexswain.com/benford.html)). È l'articolo con l'esperimento di Theodore P. Hill.\n\nScott Aaronson, *Quantum Computing Since Democritus*, Cambridge University Press, 2013: il capitolo sul libero arbitrio racconta il programma che indovina i tasti premuti. Versione giocabile dell'«oracolo di Aaronson»: [people.ischool.berkeley.edu](https://people.ischool.berkeley.edu/~nick/aaronson-oracle/) (codice su [GitHub](https://github.com/elsehow/aaronson-oracle)).\n\nPer la storia della macchina RAND (la «roulette elettronica» costruita con Douglas Aircraft nel 1947, le deviate normali ricavate dalle prime 500.000 cifre): [Wikipedia](https://en.wikipedia.org/wiki/A_Million_Random_Digits_with_100,000_Normal_Deviates).\n\nFoto di copertina, di pubblico dominio: l'ENIAC con Betty Jennings e Frances Bilas, esercito USA, 1946 ([Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Two_women_operating_ENIAC_(full_resolution).jpg)); un IBM 704 al NACA, 1957 ([Wikimedia Commons](https://commons.wikimedia.org/wiki/File:IBM_Electronic_Data_Processing_Machine_-_GPN-2000-001881.jpg)).\n\n### Metodologia\n\n**La moneta vera.** Ogni lancio «vero» usa il generatore crittografico del browser (crypto.getRandomValues).\n\n**Gli intervalli e i grafici.** Vengono da una simulazione Monte Carlo, come quelle per cui era nato il libro RAND: sono state generate 20.000 sequenze vere da 100 lanci e ne misura teste, cambi e serie più lunga; il punteggio del programma è calcolato su 4.000 di queste. «Di solito» indica l'intervallo tra il 5° e il 95° percentile, cioè il 90% centrale delle sequenze.\n\n**Il programma che prevede.** È ispirato all'oracolo di Aaronson, non è una copia: ricorda cosa è stato scritto dopo ogni gruppo di 1, 2, 3, 4 o 5 lanci e fa votare tutti questi gruppi, dando più peso a quelli visti più spesso e con una preferenza più netta. Prevede ogni lancio prima di vederlo. Su sequenze davvero casuali indovina in media il 50%, come deve.\n\n**La sequenza di esempio.** La sequenza di esempio è generata imitando le abitudini tipiche di chi inventa: dopo una serie di risultati uguali la probabilità di cambiare cresce (55% dopo un lancio, 65% dopo due, 85% dopo tre, 95% dopo quattro, sempre dopo cinque). Tra quelle generate è stata scelta la prima che ha tutte e tre le abitudini descritte nell'articolo."
+  }
+ ]
+}

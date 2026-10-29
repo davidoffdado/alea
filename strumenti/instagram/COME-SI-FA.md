@@ -59,8 +59,8 @@ Se aggiungi slide, aggiorna il numero `N` in `genera.sh`.
 
 Cartella: `Desktop/discorsi_camera/applausi/`
 
-- Si modifica `carosello/b4_alea_template.html`: testi delle note, posizioni (`left`/`top`), classifica.
-- Poi: `node carosello/genera.js b4_alea` → `carosello/png/b4_alea/litigi_1.png ... litigi_6.png`
+- Si modifica `carosello/b5_alea_template.html`: testi delle note, posizioni (`left`/`top`), classifica.
+- Poi: `node carosello/genera.js b5_alea` → `carosello/png/b5_alea/litigi_1.png ... litigi_6.png` (b5 = come b4 ma senza monospaziato, frecce e punti mediani; dal 2026-10-22)
 - I numeri (1047, 38, 98...) li calcola da `viz/litigi.json`.
 
 ## 3. Copertina lime della presentazione
